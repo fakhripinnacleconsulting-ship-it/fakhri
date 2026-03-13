@@ -1324,33 +1324,11 @@ const SuperAdminClientsTab = () => {
         const lastFour = cPhone.length > 4 ? cPhone.slice(-4) : cPhone.padStart(4, '0');
         const generatedPassword = `${firstTwo}${lastFour}`;
 
-        // Auto-sync fixed roles into assignedAdminIds before save
-        const teamAdmins = [];
-        (newClientData.teams || []).forEach(tId => {
-            const team = teams.find(t => t._id === tId);
-            if (team) {
-                const members = [team.leadId, ...(team.memberIds || [])].filter(Boolean);
-                members.forEach(m => {
-                    const role = (m.adminRole || "").toLowerCase();
-                    if (role.includes('poc') || role.includes('sales manager') || role.includes('ads manager') ||
-                        (newClientData.manager && m.name === newClientData.manager) ||
-                        (newClientData.salesManager && m.name === newClientData.salesManager) ||
-                        (newClientData.adsManager && m.name === newClientData.adsManager)) {
-                        if (!teamAdmins.includes(m._id || m.id)) teamAdmins.push((m._id || m.id).toString());
-                    }
-                });
-            }
-        });
-        const mergedAdmins = [...new Set([
-            ...(newClientData.assignedAdminIds || []).map(id => id.toString()),
-            ...teamAdmins
-        ])];
-
         const clientPayload = {
             ...newClientData,
             password: generatedPassword,
             gstNo: gst || "NA",
-            assignedAdminIds: mergedAdmins
+            assignedAdminIds: [...new Set((newClientData.assignedAdminIds || []).map(id => id.toString()))]
         };
 
         try {
@@ -1459,34 +1437,11 @@ const SuperAdminClientsTab = () => {
         }
 
         try {
-            // Auto-sync fixed roles into assignedAdminIds before save
-            const teamAdmins = [];
-            (editClientData.teams || []).forEach(tId => {
-                const team = teams.find(t => t._id === tId);
-                if (team) {
-                    const members = [team.leadId, ...(team.memberIds || [])].filter(Boolean);
-                    members.forEach(m => {
-                        const role = (m.adminRole || "").toLowerCase();
-                        if (role.includes('poc') || role.includes('sales manager') || role.includes('ads manager') ||
-                            (editClientData.manager && m.name === editClientData.manager) ||
-                            (editClientData.salesManager && m.name === editClientData.salesManager) ||
-                            (editClientData.adsManager && m.name === editClientData.adsManager)) {
-                            if (!teamAdmins.includes(m._id || m.id)) teamAdmins.push((m._id || m.id).toString());
-                        }
-                    });
-                }
-            });
-            const mergedAdmins = [...new Set([
-                ...(editClientData.assignedAdminIds || []).map(id => id.toString()),
-                ...(selectedClient.assignedAdminIds || []).map(id => id.toString()),
-                ...teamAdmins
-            ])];
-
             const updatedClient = {
                 ...selectedClient,
                 ...editClientData,
                 gstNo: gst || "NA",
-                assignedAdminIds: mergedAdmins
+                assignedAdminIds: [...new Set((editClientData.assignedAdminIds || []).map(id => id.toString()))]
             };
             const res = await upsertClient(updatedClient);
             if (res) {
@@ -1506,20 +1461,12 @@ const SuperAdminClientsTab = () => {
 
     const handleUpdatePOC = async (client, newPOC) => {
         try {
-            // Find the ID of the new manager, if applicable, to auto-inject into assignedAdminIds
             const managerObj = managers.find(m => m.name === newPOC);
-            let mergedAdmins = [...(client.assignedAdminIds || [])];
-            if (managerObj) {
-                const idStr = (managerObj._id || managerObj.id).toString();
-                if (!mergedAdmins.includes(idStr)) {
-                    mergedAdmins.push(idStr);
-                }
-            }
-
             const updatedClient = {
                 ...client,
                 manager: newPOC,
-                assignedAdminIds: mergedAdmins
+                managerId: managerObj ? (managerObj._id || managerObj.id) : null,
+                // Do not modify assignedAdminIds here; let the explicit POC fields handle visibility
             };
             const res = await upsertClient(updatedClient);
             if (res) {

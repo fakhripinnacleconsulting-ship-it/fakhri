@@ -1,13 +1,13 @@
 "use client";
 import { useState, useEffect } from "react";
-import { Plus, MoreVertical, Loader2 } from "lucide-react";
+import { Plus, MoreVertical, Loader2, Eye, Mail, Phone, Users, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
-import { upsertAdmin, deleteAdmin, toggleAdminStatus, getAdmins } from "@/lib/actions/admin";
+import { upsertAdmin, deleteAdmin, toggleAdminStatus, getAdmins, getAdminClients } from "@/lib/actions/admin";
 import { getTeams } from "@/lib/actions/team";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -131,6 +131,11 @@ const SuperAdminAdminsTab = () => {
 
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
+
+    const [viewingAdmin, setViewingAdmin] = useState(null);
+    const [adminClients, setAdminClients] = useState([]);
+    const [isLoadingClients, setIsLoadingClients] = useState(false);
+    const [isViewModalOpen, setIsViewModalOpen] = useState(false);
 
     const handleSort = (key) => {
         setSortConfig(prev => ({
@@ -300,6 +305,20 @@ const SuperAdminAdminsTab = () => {
         }));
     };
 
+    const handleViewClients = async (admin) => {
+        setViewingAdmin(admin);
+        setIsViewModalOpen(true);
+        setIsLoadingClients(true);
+        try {
+            const clients = await getAdminClients(admin._id);
+            setAdminClients(clients || []);
+        } catch (error) {
+            console.error("Error loading admin clients:", error);
+            toast.error("Failed to load associated clients");
+        }
+        setIsLoadingClients(false);
+    };
+
     if (loading) {
         return (
             <div className="h-64 flex flex-col items-center justify-center">
@@ -357,8 +376,8 @@ const SuperAdminAdminsTab = () => {
                                     </button>
                                 </TableHead>
                                 <TableHead>
-                                    <button onClick={() => handleSort('clientCount')} className="flex items-center hover:text-primary transition-colors font-bold uppercase text-[11px] tracking-wider">
-                                        Clients {getSortIcon('clientCount')}
+                                    <button onClick={() => handleSort('clientsCount')} className="flex items-center hover:text-primary transition-colors font-bold uppercase text-[11px] tracking-wider">
+                                        Clients {getSortIcon('clientsCount')}
                                     </button>
                                 </TableHead>
                                 <TableHead>
@@ -403,14 +422,23 @@ const SuperAdminAdminsTab = () => {
                                             </div>
                                         </TableCell>
                                         <TableCell className="text-right">
-                                            <DropdownMenu>
-                                                <DropdownMenuTrigger asChild>
-                                                    <Button variant="ghost" size="sm">
-                                                        <MoreVertical className="h-4 w-4" />
-                                                    </Button>
-                                                </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end">
-                                                    <DropdownMenuItem onClick={() => handleOpenModal(admin)}>Edit</DropdownMenuItem>
+                                            <div className="flex items-center justify-end gap-1">
+                                                <Button 
+                                                    variant="ghost" 
+                                                    size="sm" 
+                                                    className="h-8 w-8 p-0 text-muted-foreground hover:text-primary"
+                                                    onClick={() => handleViewClients(admin)}
+                                                >
+                                                    <Eye className="h-4 w-4" />
+                                                </Button>
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger asChild>
+                                                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                                            <MoreVertical className="h-4 w-4" />
+                                                        </Button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent align="end">
+                                                        <DropdownMenuItem onClick={() => handleOpenModal(admin)}>Edit</DropdownMenuItem>
                                                     <AlertDialog>
                                                         <AlertDialogTrigger asChild>
                                                             <DropdownMenuItem
@@ -439,7 +467,8 @@ const SuperAdminAdminsTab = () => {
                                                         </AlertDialogContent>
                                                     </AlertDialog>
                                                 </DropdownMenuContent>
-                                            </DropdownMenu>
+                                                </DropdownMenu>
+                                            </div>
                                         </TableCell>
                                     </TableRow>
                                 ))
@@ -460,6 +489,130 @@ const SuperAdminAdminsTab = () => {
                 totalPages={totalPages}
                 onPageChange={setCurrentPage}
             />
+
+            {/* View Admin Clients Modal */}
+            <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>
+                <DialogContent className="sm:max-w-[600px] max-h-[85vh] flex flex-col p-0 gap-0">
+                    <DialogHeader className="p-6 border-b">
+                        <DialogTitle>Admin Profile: {viewingAdmin?.name}</DialogTitle>
+                        <DialogDescription>
+                            Assigned clients and roles across the system.
+                        </DialogDescription>
+                    </DialogHeader>
+                    
+                    <div className="flex-1 overflow-hidden flex flex-col">
+                        <ScrollableContainer className="flex-1">
+                            <div className="p-6 pt-4 space-y-6">
+                                {/* Admin Details Header Area */}
+                                <div className="flex items-start gap-4 p-4 rounded-xl bg-primary/5 border border-primary/10">
+                                    <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center text-primary text-xl font-bold uppercase shrink-0">
+                                        {viewingAdmin?.name?.split(' ').map(n => n[0]).join('')}
+                                    </div>
+                                    <div className="space-y-1">
+                                        <h2 className="text-xl font-bold capitalize leading-tight">{viewingAdmin?.name}</h2>
+                                        <div className="flex flex-wrap gap-2 pt-1">
+                                            <Badge variant="outline" className="bg-background/50 border-primary/20 text-primary px-2 py-0 h-5 text-[10px] uppercase font-bold tracking-wider">
+                                                {viewingAdmin?.adminRole || viewingAdmin?.role || "Manager"}
+                                            </Badge>
+                                            <Badge variant="outline" className="bg-background/50 border-muted text-muted-foreground px-2 py-0 h-5 text-[10px] uppercase font-bold tracking-wider">
+                                                {viewingAdmin?.team || "No Team"}
+                                            </Badge>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Contact & Info Cards */}
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div className="space-y-3">
+                                        <h3 className="font-bold text-[10px] uppercase text-muted-foreground tracking-widest pl-1">Contact Information</h3>
+                                        <div className="space-y-2">
+                                            <div className="flex items-center gap-3 p-3 rounded-lg border bg-card/30">
+                                                <Mail className="h-4 w-4 text-primary opacity-70" />
+                                                <div className="overflow-hidden">
+                                                    <p className="text-[10px] text-muted-foreground uppercase font-bold leading-none mb-1">Email</p>
+                                                    <p className="text-sm truncate font-medium">{viewingAdmin?.email}</p>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-3 p-3 rounded-lg border bg-card/30">
+                                                <Phone className="h-4 w-4 text-primary opacity-70" />
+                                                <div>
+                                                    <p className="text-[10px] text-muted-foreground uppercase font-bold leading-none mb-1">Phone</p>
+                                                    <p className="text-sm font-medium">{viewingAdmin?.phone || "N/A"}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-3">
+                                        <h3 className="font-bold text-[10px] uppercase text-muted-foreground tracking-widest pl-1">Performance Overview</h3>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <div className="p-3 rounded-lg border bg-card/30 text-center">
+                                                <p className="text-2xl font-bold text-primary">{viewingAdmin?.clientsCount || 0}</p>
+                                                <p className="text-[9px] text-muted-foreground uppercase font-bold">Clients</p>
+                                            </div>
+                                            <div className="p-3 rounded-lg border bg-card/30 text-center">
+                                                <p className="text-2xl font-bold text-amber-500">{viewingAdmin?.performance?.activeTasks || 0}</p>
+                                                <p className="text-[9px] text-muted-foreground uppercase font-bold">Active Tasks</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Shared Clients List */}
+                                <div className="space-y-3 pt-2">
+                                    <div className="flex items-center justify-between pl-1">
+                                        <h3 className="font-bold text-[10px] uppercase text-muted-foreground tracking-widest">Client Access List</h3>
+                                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-muted text-muted-foreground italic">
+                                            Showing {adminClients.length} unique client assignments
+                                        </span>
+                                    </div>
+
+                                    {isLoadingClients ? (
+                                        <div className="py-12 border rounded-xl border-dashed flex flex-col items-center justify-center">
+                                            <Loader2 className="h-6 w-6 text-primary animate-spin mb-2" />
+                                            <p className="text-xs text-muted-foreground uppercase font-bold tracking-tighter">Syncing assignments...</p>
+                                        </div>
+                                    ) : adminClients.length > 0 ? (
+                                        <div className="space-y-2">
+                                            {adminClients.map((client) => (
+                                                <div key={client._id} className="p-3 rounded-xl border bg-card hover:bg-muted/5 transition-colors flex items-center justify-between group">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center group-hover:bg-primary/10 transition-colors">
+                                                            <Users className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-sm font-bold leading-none mb-1">{client.name}</p>
+                                                            <p className="text-[10px] text-muted-foreground uppercase tracking-tight">{client.company || 'Personal'}</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex flex-wrap gap-1 justify-end max-w-[50%]">
+                                                        {client.roles.map((role, idx) => (
+                                                            <Badge key={idx} variant="outline" className="text-[9px] py-0 px-1.5 h-4 bg-muted/30 border-muted text-muted-foreground whitespace-nowrap">
+                                                                {role}
+                                                            </Badge>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="py-10 border rounded-xl border-dashed border-muted text-center flex flex-col items-center gap-2">
+                                            <ShieldCheck className="h-8 w-8 text-muted opacity-20" />
+                                            <p className="text-xs text-muted-foreground font-medium">No direct client assignments found for this profile.</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </ScrollableContainer>
+                    </div>
+                    
+                    <DialogFooter className="p-4 border-t bg-muted/20">
+                        <Button variant="secondary" className="w-full" onClick={() => setIsViewModalOpen(false)}>
+                            Close Profile
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
 
             {/* Add/Edit Admin Modal */}
             <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
