@@ -203,7 +203,7 @@ export default function NotificationDropdown({
                                     <h3 className="font-semibold text-base">Notifications</h3>
                                     {unreadCount > 0 && (
                                         <span className="px-2 py-0.5 bg-primary/10 text-primary text-xs font-medium rounded-full">
-                                            {unreadCount} new
+                                            {unreadCount > 99 ? "99+" : unreadCount} new
                                         </span>
                                     )}
                                 </div>

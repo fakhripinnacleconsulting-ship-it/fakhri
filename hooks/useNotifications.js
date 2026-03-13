@@ -17,7 +17,7 @@ export default function useNotifications(recipientId) {
     const fetchInitial = useCallback(async () => {
         if (!recipientId) return;
         try {
-            const data = await getNotifications({ recipientId, limit: 30 });
+            const data = await getNotifications({ recipientId, limit: 200 });
             setNotifications(data || []);
             setUnreadCount((data || []).filter(n => !n.read).length);
         } catch (error) {
@@ -59,7 +59,7 @@ export default function useNotifications(recipientId) {
                         setNotifications(prev => {
                             // Avoid duplicates
                             if (prev.find(n => n._id === newNotif._id)) return prev;
-                            const updated = [newNotif, ...prev].slice(0, 50);
+                            const updated = [newNotif, ...prev].slice(0, 200);
                             setUnreadCount(updated.filter(n => !n.read).length);
                             return updated;
                         });
