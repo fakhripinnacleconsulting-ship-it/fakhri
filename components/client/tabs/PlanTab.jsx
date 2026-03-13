@@ -194,11 +194,18 @@ const ClientPlanTab = ({ currentUser, managerPhone, managerName }) => {
     };
 
     // Dates & Expiry Calculation
-    // Assuming validity of 28 days from purchase/joined date
-    const purchaseDate = client?.joinedDate ? new Date(client.joinedDate) : new Date();
-    const planDays = calculatePeriodDays(currentPlan?.period);
-    const expiryDate = new Date(purchaseDate);
-    expiryDate.setDate(expiryDate.getDate() + planDays);
+    // Use subscriptionEnd from DB if available, otherwise fallback to old calculation
+    const purchaseDate = client?.subscriptionStart ? new Date(client.subscriptionStart) : (client?.joinedDate ? new Date(client.joinedDate) : new Date());
+    
+    let expiryDate;
+    if (client?.subscriptionEnd) {
+        expiryDate = new Date(client.subscriptionEnd);
+    } else {
+        // Fallback calculation
+        const planDays = calculatePeriodDays(currentPlan?.period);
+        expiryDate = new Date(purchaseDate);
+        expiryDate.setDate(expiryDate.getDate() + planDays);
+    }
 
     const today = new Date();
     const isExpired = today > expiryDate;

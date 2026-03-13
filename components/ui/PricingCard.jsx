@@ -9,6 +9,7 @@ import { ContactDialog } from '@/components/dialogs/ContactDialog';
 import { useSession } from "next-auth/react";
 import { useRouter, usePathname } from "next/navigation";
 import { toast } from "sonner";
+import { formatINR, cn } from "@/lib/utils";
 
 export const PricingCard = ({ plan, index }) => {
     const { data: session } = useSession();
@@ -48,9 +49,10 @@ export const PricingCard = ({ plan, index }) => {
         }
     };
 
-    // Show only first 10 features
-    const displayFeatures = plan.features.slice(0, 10);
-    const hasMoreFeatures = plan.features.length > 10;
+    // Filter out features with empty text and show only first 10
+    const validFeatures = (plan.features || []).filter(f => f.text && f.text.trim().length > 0);
+    const displayFeatures = validFeatures.slice(0, 10);
+    const hasMoreFeatures = validFeatures.length > 10;
 
     return (
         <ScrollReveal delay={index * 0.1}>
@@ -69,16 +71,16 @@ export const PricingCard = ({ plan, index }) => {
                     </div>
                 )}
 
-                <div className="p-8">
+                <div className="p-6">
                     {/* Header */}
-                    <div className="mb-6">
-                        <p className={`text-sm font-medium mb-1 ${plan.highlighted ? 'text-primary-foreground/70' : 'text-muted-foreground'
-                            }`}>
-                            {plan.subtitle}
-                        </p>
+                    <div className="mb-4">
                         <h3 className="heading-md mb-2">{plan.name}</h3>
                         <div className="flex items-baseline gap-1">
-                            <span className="text-4xl font-poppins font-bold">{plan.prices.monthly || plan.prices.monthlyUSD || "₹15,000"}</span>
+                            <span className="text-4xl font-poppins font-bold">
+                                {plan.prices.monthly?.toString().startsWith('₹') 
+                                    ? plan.prices.monthly 
+                                    : (plan.prices?.monthly ? `₹${formatINR(plan.prices.monthly)}` : '₹15,000')}
+                            </span>
                             {plan.period && (
                                 <span className={`text-sm ${plan.highlighted ? 'text-primary-foreground/70' : 'text-muted-foreground'
                                     }`}>
@@ -88,35 +90,25 @@ export const PricingCard = ({ plan, index }) => {
                         </div>
                     </div>
 
-                    {/* Description */}
-                    <p className={`text-sm mb-8 ${plan.highlighted ? 'text-primary-foreground/80' : 'text-muted-foreground'
-                        }`}>
-                        {plan.description}
-                    </p>
-
                     {/* Features */}
                     <ul className="space-y-3 mb-6">
                         {displayFeatures.map((feature, idx) => (
-                            <li key={idx} className="flex items-start gap-3">
+                            <li key={idx} className={cn(
+                                "flex items-start gap-3 transition-opacity duration-300",
+                                !feature.included && "opacity-50"
+                            )}>
                                 {feature.included ? (
-                                    <Check className={`w-5 h-5 flex-shrink-0 ${plan.highlighted ? 'text-primary-foreground' : 'text-primary'
+                                    <Check className={`w-5 h-5 flex-shrink-0 mt-0.5 ${plan.highlighted ? 'text-primary-foreground' : 'text-primary'
                                         }`} />
                                 ) : (
-                                    <X className={`w-5 h-5 flex-shrink-0 ${plan.highlighted ? 'text-primary-foreground/30' : 'text-muted-foreground/30'
+                                    <X className={`w-4 h-4 flex-shrink-0 mt-1 ${plan.highlighted ? 'text-primary-foreground/40' : 'text-muted-foreground/40'
                                         }`} />
                                 )}
-                                <span className={`text-sm ${feature.included
-                                    ? ''
-                                    : plan.highlighted
-                                        ? 'text-primary-foreground/40'
-                                        : 'text-muted-foreground/40'
-                                    }`}>
+                                <span className={cn(
+                                    "text-sm leading-tight",
+                                    !feature.included && "line-through decoration-1"
+                                )}>
                                     {feature.text}
-                                    {feature.value && typeof feature.value === 'string' && (
-                                        <span className={`block text-xs font-semibold mt-0.5 ${plan.highlighted ? 'text-primary-foreground/90' : 'text-primary'}`}>
-                                            {feature.value}
-                                        </span>
-                                    )}
                                 </span>
                             </li>
                         ))}

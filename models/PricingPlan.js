@@ -8,13 +8,14 @@ const PricingPlanSchema = new mongoose.Schema({
         monthly: { type: String },
         monthlyUSD: { type: String },
     },
-    period: { type: String, default: '/month' },
-    description: { type: String },
-    supportType: {
-        type: String,
-        enum: ['Normal', 'Within 2 Hours'],
-        default: 'Normal'
+    durationValue: { type: Number, default: 1 },
+    durationUnit: { 
+        type: String, 
+        enum: ['day', 'month', 'year'], 
+        default: 'month' 
     },
+    period: { type: String }, // For display purposes, e.g., "/ month" or "30 Days"
+    description: { type: String },
     highlighted: { type: Boolean, default: false },
     cta: { type: String },
     features: [{

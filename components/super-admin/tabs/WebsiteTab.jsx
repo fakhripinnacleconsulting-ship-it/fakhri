@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Search, Edit, Trash2, Save, X, ChevronRight, FileText, MessageSquare, HelpCircle, Briefcase, Building, Users, DollarSign, List, Shield, Eye, RefreshCw, Check, GripVertical, Loader2, ChevronsUpDown, ArrowUp, ArrowDown } from "lucide-react";
@@ -20,8 +20,7 @@ const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false });
 import 'react-quill-new/dist/quill.snow.css';
 import { ImagePicker } from "@/components/ui/image-picker";
 import { ScrollableContainer } from "@/components/ui/scrollable-container";
-import { normalizePeriod } from "@/lib/utils";
-import { cn } from "@/lib/utils";
+import { normalizePeriod, formatINR, cn } from "@/lib/utils";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
@@ -99,7 +98,9 @@ const CreatableCombobox = ({ value, onChange, options, placeholder, emptyText = 
 import {
     getCompanyData, updateCompanyData,
     getTeamMembers, upsertTeamMember, deleteTeamMember,
-    getPricingPlans, upsertPricingPlan,
+    getPricingPlans, upsertPricingPlan, deletePricingPlan,
+    getPricingFeatures, upsertPricingFeature, deletePricingFeature,
+    getMilestones,
     getServices, upsertService, deleteService,
     getCatalogServices, upsertCatalogService, deleteCatalogService,
     getTestimonials, upsertTestimonial, deleteTestimonial,
@@ -118,6 +119,7 @@ export default function WebsiteTab() {
     const [companyInfo, setCompanyInfo] = useState(null);
     const [members, setMembers] = useState([]);
     const [pricingPlans, setPricingPlans] = useState([]);
+    const [pricingFeatures, setPricingFeatures] = useState([]);
     const [services, setServices] = useState([]);
     const [catalog, setCatalog] = useState([]);
     const [testimonials, setTestimonials] = useState([]);
@@ -132,6 +134,7 @@ export default function WebsiteTab() {
                 companyData,
                 teamData,
                 plansData,
+                pricingFeaturesData,
                 servicesData,
                 catalogData,
                 testimonialData,
@@ -142,6 +145,7 @@ export default function WebsiteTab() {
                 getCompanyData(),
                 getTeamMembers(),
                 getPricingPlans(),
+                getPricingFeatures(),
                 getServices(),
                 getCatalogServices(),
                 getTestimonials(),
@@ -153,6 +157,7 @@ export default function WebsiteTab() {
             setCompanyInfo(companyData || {});
             setMembers(teamData || []);
             setPricingPlans(plansData || []);
+            setPricingFeatures(pricingFeaturesData || []);
             setServices(servicesData || []);
             setCatalog(catalogData || []);
 
@@ -197,7 +202,13 @@ export default function WebsiteTab() {
                     break;
                 case "Pricing":
                     const prices = await getPricingPlans();
+                    const features = await getPricingFeatures();
                     setPricingPlans(prices);
+                    setPricingFeatures(features);
+                    break;
+                case "Features":
+                    const fts = await getPricingFeatures();
+                    setPricingFeatures(fts);
                     break;
                 case "Services":
                     const srvs = await getServices();
@@ -250,7 +261,8 @@ export default function WebsiteTab() {
     const categories = useMemo(() => [
         { id: "Company", label: "Company Profile", icon: Building, description: "Manage brand profile, contact info, and core story." },
         { id: "Team", label: "Our Team", icon: Users, description: "Showcase the brilliant minds driving your company's success." },
-        { id: "Pricing", label: "Our Plans", icon: DollarSign, description: "Configure plans, pricing tiers, and service modules." },
+        { id: "Pricing", label: "Our Plans", icon: DollarSign, description: "Configure plans and pricing tiers." },
+        { id: "Features", label: "Plan Features", icon: List, description: "Manage global feature library for all pricing plans." },
         { id: "Services", label: "Key Services", icon: Briefcase, description: "Highlight primary services with features and key benefits." },
         { id: "Catalog", label: "Service Catalog", icon: List, description: "Define detailed service offerings and specific item pricing." },
         { id: "Blogs", label: "Blog & News", icon: FileText, description: "Publish articles, industry news, and expert perspectives." },
@@ -318,7 +330,8 @@ export default function WebsiteTab() {
             <div className="min-h-[500px]">
                 {activeCategory === "Company" && <CompanyManager data={companyInfo} onUpdate={setCompanyInfo} refreshData={refreshCategoryData} />}
                 {activeCategory === "Team" && <TeamManager data={members} onUpdate={setMembers} refreshData={refreshCategoryData} />}
-                {activeCategory === "Pricing" && <PricingManager data={pricingPlans} onUpdate={setPricingPlans} refreshData={refreshCategoryData} />}
+                {activeCategory === "Pricing" && <PricingManager data={pricingPlans} featuresData={pricingFeatures} onUpdate={setPricingPlans} refreshData={refreshCategoryData} />}
+                {activeCategory === "Features" && <FeatureManager data={pricingFeatures} plansData={pricingPlans} onUpdate={setPricingFeatures} refreshData={refreshCategoryData} onPlansUpdate={setPricingPlans} />}
                 {activeCategory === "Services" && <ServiceManager data={services} onUpdate={setServices} refreshData={refreshCategoryData} />}
                 {activeCategory === "Catalog" && <CatalogManager data={catalog} onUpdate={setCatalog} refreshData={refreshCategoryData} />}
                 {activeCategory === "Blogs" && <BlogManager data={posts} onUpdate={setPosts} refreshData={refreshCategoryData} />}
@@ -851,8 +864,384 @@ function TeamManager({ data, onUpdate, refreshData }) {
 }
 
 // 3. Pricing Manager
+// 2.5 Feature Manager
+function FeatureManager({ data, plansData, onUpdate, refreshData, onPlansUpdate }) {
+    const [features, setFeatures] = useState(Array.isArray(data) ? data : []);
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [currentFeature, setCurrentFeature] = useState(null);
+    const [isLoading, setIsLoading] = useState(false);
+    const [searchQuery, setSearchQuery] = useState("");
+    const [selectedPlans, setSelectedPlans] = useState([]); // Array of plan IDs where this feature is included
+
+    useEffect(() => {
+        if (Array.isArray(data)) setFeatures(data);
+    }, [data]);
+
+    useEffect(() => {
+        if (currentFeature) {
+            // Find which plans have this feature included
+            const activePlans = (plansData || []).filter(plan =>
+                plan.features?.some(f => f.text === currentFeature.text && f.included)
+            ).map(p => p._id || p.id);
+            setSelectedPlans(activePlans);
+        } else {
+            setSelectedPlans([]);
+        }
+    }, [currentFeature, plansData]);
+
+    const handleSave = async (e) => {
+        e.preventDefault();
+        setIsLoading(true);
+        const formData = new FormData(e.target);
+
+        const newText = formData.get("text")?.trim();
+        if (!newText) {
+            toast.error("Feature text is required");
+            setIsLoading(false);
+            return;
+        }
+
+        const featureObj = {
+            id: currentFeature?._id || currentFeature?.id,
+            text: newText,
+            description: formData.get("description"),
+            order: Number(formData.get("order")) || 0
+        };
+
+        const oldText = currentFeature?.text;
+
+        try {
+            const savedFeature = await upsertPricingFeature(featureObj);
+            if (savedFeature) {
+                // Update plans association
+                const planUpdates = (plansData || []).map(async (plan) => {
+                    const isSelected = selectedPlans.includes(plan._id || plan.id);
+                    
+                    // Find by current text OR old text (if renamed)
+                    const existingIndex = (plan.features || []).findIndex(f => 
+                        f.text === newText || (oldText && f.text === oldText)
+                    );
+
+                    let newFeatures = [...(plan.features || [])];
+                    if (existingIndex > -1) {
+                        // Update existing entry with new name and status
+                        newFeatures[existingIndex] = { 
+                            ...newFeatures[existingIndex], 
+                            text: newText, 
+                            included: isSelected 
+                        };
+                    } else if (isSelected) {
+                        // Add new entry if it's a new feature and selected
+                        newFeatures.push({ text: newText, value: "", included: true });
+                    }
+
+                    // For performance, you might want to filter out empty/duplicate features here too
+                    newFeatures = newFeatures.filter((f, i, self) => 
+                        f.text && f.text.trim().length > 0 && 
+                        self.findIndex(t => t.text === f.text) === i
+                    );
+
+                    // Update plan in DB
+                    return await upsertPricingPlan({ ...plan, features: newFeatures, id: plan._id || plan.id });
+                });
+
+                await Promise.all(planUpdates);
+
+                toast.success("Feature and Plan associations updated");
+                setIsDialogOpen(false);
+                refreshData();
+                if (onPlansUpdate) {
+                    const updatedPlans = await getPricingPlans();
+                    onPlansUpdate(updatedPlans);
+                }
+            }
+        } catch (error) {
+            console.error(error);
+            toast.error("Failed to save feature");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleDelete = async (id) => {
+        if (!confirm("Are you sure? This will not remove the feature text from existing plans but will delete it from the library.")) return;
+        try {
+            await deletePricingFeature(id);
+            toast.success("Feature deleted from library");
+            refreshData();
+        } catch (error) {
+            toast.error("Failed to delete feature");
+        }
+    };
+
+    const filteredFeatures = features.filter(f => f.text.toLowerCase().includes(searchQuery.toLowerCase()));
+
+    return (
+        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-muted/30 p-4 rounded-xl border border-dashed text-sm">
+                <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 bg-primary/10 rounded-lg flex items-center justify-center text-primary">
+                        <List className="h-5 w-5" />
+                    </div>
+                    <div>
+                        <p className="font-bold">Global Feature Library</p>
+                        <p className="text-muted-foreground text-xs uppercase tracking-tight">Manage standard offerings across plans</p>
+                    </div>
+                </div>
+                <div className="flex gap-2">
+                    <Button variant="outline" size="sm" onClick={() => refreshData()} className="h-9">
+                        <RefreshCw className="mr-2 h-3.5 w-3.5" /> Sync
+                    </Button>
+                    <Button onClick={() => { setCurrentFeature(null); setIsDialogOpen(true); }} className="h-9">
+                        <Plus className="mr-2 h-4 w-4" /> Add Feature
+                    </Button>
+                </div>
+            </div>
+
+            <div className="flex items-center relative max-w-md">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                    placeholder="Search feature library..."
+                    className="pl-10 h-10 ring-offset-background focus-visible:ring-primary/10"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                />
+            </div>
+
+            <div className="rounded-2xl border bg-card overflow-hidden shadow-sm">
+                <Table>
+                    <TableHeader className="bg-muted/30">
+                        <TableRow>
+                            <TableHead className="w-16">Rank</TableHead>
+                            <TableHead>Feature Identification</TableHead>
+                            <TableHead>Context/Description</TableHead>
+                            <TableHead>Active Plans</TableHead>
+                            <TableHead className="text-right">Manage</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {filteredFeatures.length === 0 && (
+                            <TableRow>
+                                <TableCell colSpan={5} className="h-32 text-center text-muted-foreground italic">
+                                    No global features configured yet.
+                                </TableCell>
+                            </TableRow>
+                        )}
+                        {filteredFeatures.map((feature) => {
+                            const activeIn = (plansData || []).filter(p => p.features?.some(f => f.text === feature.text && f.included));
+                            return (
+                                <TableRow key={feature._id || feature.id} className="group transition-colors">
+                                    <TableCell className="font-mono text-[10px] text-muted-foreground">#{feature.order}</TableCell>
+                                    <TableCell>
+                                        <div className="font-bold text-sm tracking-tight capitalize">{feature.text}</div>
+                                    </TableCell>
+                                    <TableCell className="text-xs text-muted-foreground max-w-md truncate">
+                                        {feature.description || "No description provided."}
+                                    </TableCell>
+                                    <TableCell>
+                                        <div className="flex gap-1">
+                                            {activeIn.length === 0 ? <span className="text-[10px] text-muted-foreground italic">None</span> :
+                                                activeIn.slice(0, 3).map(p => (
+                                                    <Badge key={p._id || p.id} variant="outline" className="text-[9px] px-1 py-0 uppercase font-bold opacity-80">{p.name}</Badge>
+                                                ))
+                                            }
+                                            {activeIn.length > 3 && <span className="text-[9px] text-muted-foreground">+{activeIn.length - 3} more</span>}
+                                        </div>
+                                    </TableCell>
+                                    <TableCell className="text-right">
+                                        <div className="flex justify-end gap-1 opacity-100 group-hover:opacity-100 transition-opacity">
+                                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setCurrentFeature(feature); setIsDialogOpen(true); }}>
+                                                <Edit className="h-3.5 w-3.5" />
+                                            </Button>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/5" onClick={() => handleDelete(feature._id || feature.id)}>
+                                                <Trash2 className="h-3.5 w-3.5" />
+                                            </Button>
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            );
+                        })}
+                    </TableBody>
+                </Table>
+            </div>
+
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogContent className="max-w-2xl bg-card border-none shadow-2xl">
+                    <DialogHeader>
+                        <DialogTitle className="text-xl font-extrabold tracking-tight">
+                            {currentFeature ? "Standard Feature Properties" : "New Global Listing"}
+                        </DialogTitle>
+                        <DialogDescription className="font-medium">Define how this feature appears across your pricing infrastructure.</DialogDescription>
+                    </DialogHeader>
+                    <form onSubmit={handleSave} className="space-y-8 py-4">
+                        <div className="grid gap-6">
+                            <div className="grid gap-2">
+                                <Label className="text-xs uppercase font-bold tracking-widest text-muted-foreground flex items-center gap-2">
+                                    Feature Display Name <span className="text-primary">*</span>
+                                </Label>
+                                <Input name="text" defaultValue={currentFeature?.text} required placeholder="e.g. Account Health Monitoring" className="h-12 bg-muted/20 border-none font-bold text-lg focus:ring-2 focus:ring-primary/20" />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label className="text-xs uppercase font-bold tracking-widest text-muted-foreground">Public Description</Label>
+                                <Textarea name="description" defaultValue={currentFeature?.description} placeholder="Explain what this feature provides to the customer..." className="min-h-[100px] bg-muted/20 border-none focus:ring-2 focus:ring-primary/20" />
+                            </div>
+                            <div className="w-32">
+                                <Label className="text-xs uppercase font-bold tracking-widest text-muted-foreground pb-2">Priority Order</Label>
+                                <Input type="number" name="order" defaultValue={currentFeature?.order || 0} className="bg-muted/20 border-none" />
+                            </div>
+                        </div>
+
+                        <div className="bg-muted/30 p-6 rounded-2xl border border-dashed">
+                            <Label className="text-sm font-extrabold mb-4 block flex items-center gap-2 text-primary">
+                                <Shield className="h-4 w-4" /> Entitlement Matrix
+                            </Label>
+                            <div className="grid grid-cols-2 gap-4">
+                                {(plansData || []).map(plan => (
+                                    <div key={plan._id || plan.id} className="flex items-center space-x-3 p-3 bg-card rounded-xl border border-transparent hover:border-primary/20 transition-all cursor-pointer shadow-sm group">
+                                        <Checkbox
+                                            id={`plan-${plan._id || plan.id}`}
+                                            checked={selectedPlans.includes(plan._id || plan.id)}
+                                            onCheckedChange={(checked) => {
+                                                if (checked) setSelectedPlans([...selectedPlans, plan._id || plan.id]);
+                                                else setSelectedPlans(selectedPlans.filter(pid => pid !== (plan._id || plan.id)));
+                                            }}
+                                            className="h-5 w-5 data-[state=checked]:bg-primary"
+                                        />
+                                        <Label htmlFor={`plan-${plan._id || plan.id}`} className="cursor-pointer capitalize font-bold text-sm flex-1 group-hover:text-primary transition-colors">
+                                            {plan.name}
+                                        </Label>
+                                    </div>
+                                ))}
+                            </div>
+                            <p className="text-[10px] text-muted-foreground mt-4 italic font-medium">
+                                * Syncing will automatically update these plans to either include or exclude this feature.
+                            </p>
+                        </div>
+
+                        <DialogFooter className="gap-2">
+                            <Button type="button" variant="ghost" onClick={() => setIsDialogOpen(false)} className="font-semibold">Discard</Button>
+                            <Button type="submit" disabled={isLoading} className="bg-primary font-bold px-8 shadow-lg shadow-primary/20">
+                                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                Sync Listings
+                            </Button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
+        </div>
+    );
+}
+
+// Helper for Feature List Management in Pricing Plans
+function FeatureListManager({ features = [], globalFeatures = [], onChange, isViewMode }) {
+    const handleAdd = () => {
+        onChange([...features, { text: "", value: "", included: true }]);
+    };
+    const handleRemove = (text) => {
+        onChange(features.filter((f) => f.text !== text));
+    };
+    const handleChange = (text, field, val) => {
+        const existingIndex = features.findIndex(f => f.text === text);
+        let newFeatures = [...features];
+        if (existingIndex > -1) {
+            newFeatures[existingIndex] = { ...newFeatures[existingIndex], [field]: val };
+        } else {
+            newFeatures.push({ text, value: field === 'value' ? val : "", included: field === 'included' ? val : false });
+        }
+        onChange(newFeatures);
+    };
+
+    // Prepare display list: Global items + any unique custom plan features
+    const globalTexts = new Set((globalFeatures || []).map(gf => gf.text));
+    const merged = (globalFeatures || []).map(gf => {
+        const planF = features.find(f => f.text === gf.text);
+        return {
+            text: gf.text,
+            value: planF?.value || "",
+            included: planF?.included || false,
+            isGlobal: true,
+            description: gf.description
+        };
+    });
+    const customs = features.filter(f => !globalTexts.has(f.text)).map(cf => ({ ...cf, isGlobal: false }));
+    const displayList = [...merged, ...customs];
+
+    return (
+        <div className="space-y-4 border p-5 rounded-2xl bg-muted/20 shadow-inner">
+            <div className="flex items-center justify-between border-b pb-3 mb-2">
+                <div className="flex items-center gap-2">
+                    <div className="p-1.5 bg-primary/10 rounded-lg">
+                        <List className="h-4 w-4 text-primary" />
+                    </div>
+                    <div>
+                        <Label className="text-base font-extrabold tracking-tight">Entitlements & Features</Label>
+                        <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-widest">Global & Custom Overrides</p>
+                    </div>
+                </div>
+            </div>
+            <div className="space-y-2">
+                {displayList.length === 0 && (
+                    <div className="text-center py-6 text-muted-foreground italic text-sm border-2 border-dashed rounded-xl">
+                        No features enabled for this plan.
+                    </div>
+                )}
+                {displayList.map((feature, index) => (
+                    <div key={index} className={`flex gap-4 items-start p-3 border rounded-xl bg-card group hover:shadow-md transition-all duration-300 relative ${!feature.included && 'opacity-60'}`}>
+                        <div className="flex-1 pt-1">
+                            <div className="space-y-1">
+                                <div className="flex items-center gap-2 mb-1">
+                                    <Label className="text-[10px] uppercase font-bold text-muted-foreground ml-1">Label</Label>
+                                    {feature.isGlobal && (
+                                        <Badge variant="secondary" className="text-[8px] h-3 px-1.5 font-extrabold bg-primary/5 text-primary">LIBRARY</Badge>
+                                    )}
+                                </div>
+                                {feature.isGlobal ? (
+                                    <div className="px-3 py-1.5 text-sm font-bold capitalize select-none h-9 flex items-center bg-muted/10 rounded-md truncate">
+                                        {feature.text}
+                                    </div>
+                                ) : (
+                                    <Input
+                                        placeholder="e.g. Custom Perk"
+                                        value={feature.text}
+                                        onChange={(e) => handleChange(feature.text, 'text', e.target.value)}
+                                        readOnly={isViewMode}
+                                        className="bg-muted/30 border-none h-9 text-sm font-bold focus:ring-1 focus:ring-primary/20"
+                                    />
+                                )}
+                            </div>
+                        </div>
+                        <div className="flex flex-col items-center gap-1 px-3 border-l pb-1">
+                            <Label className="text-[10px] uppercase font-extrabold text-primary pt-1">Active</Label>
+                            <Checkbox
+                                disabled={isViewMode}
+                                checked={feature.included}
+                                onCheckedChange={(val) => handleChange(feature.text, 'included', !!val)}
+                                className="h-5 w-5 data-[state=checked]:bg-primary shadow-sm"
+                            />
+                        </div>
+                        {!isViewMode && !feature.isGlobal && (
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="text-destructive h-8 w-8 hover:bg-destructive/10 rounded-full mt-2"
+                                onClick={() => handleRemove(feature.text)}
+                            >
+                                <X className="h-4 w-4" />
+                            </Button>
+                        )}
+                    </div>
+                ))}
+            </div>
+            {!isViewMode && displayList.length > 0 && (
+                <p className="text-[10px] text-muted-foreground text-center font-bold tracking-tight bg-muted/10 py-2 rounded-lg">Items marked as 'LIBRARY' are shared globally. Changes in library will affect all plans.</p>
+            )}
+        </div>
+    );
+}
+
 // 3. Pricing Manager
-function PricingManager({ data, onUpdate, refreshData }) {
+function PricingManager({ data, featuresData, onUpdate, refreshData }) {
     const [pricingData, setPricingData] = useState(Array.isArray(data) ? data : []);
 
     useEffect(() => {
@@ -863,11 +1252,20 @@ function PricingManager({ data, onUpdate, refreshData }) {
     const [currentPlan, setCurrentPlan] = useState(null);
     const [isViewMode, setIsViewMode] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
-    const [selectedPeriod, setSelectedPeriod] = useState("");
+    const [durationValue, setDurationValue] = useState(1);
+    const [durationUnit, setDurationUnit] = useState("month");
+    const [features, setFeatures] = useState([]);
 
     useEffect(() => {
-        if (currentPlan) setSelectedPeriod(currentPlan.period || "");
-        else setSelectedPeriod("");
+        if (currentPlan) {
+            setDurationValue(currentPlan.durationValue || 1);
+            setDurationUnit(currentPlan.durationUnit || "month");
+            setFeatures(currentPlan.features || []);
+        } else {
+            setDurationValue(1);
+            setDurationUnit("month");
+            setFeatures([]);
+        }
     }, [currentPlan]);
 
     const [searchQuery, setSearchQuery] = useState("");
@@ -887,6 +1285,14 @@ function PricingManager({ data, onUpdate, refreshData }) {
         setIsLoading(true);
         const formData = new FormData(e.target);
 
+        const durationValueNum = Number(durationValue) || 1;
+        const durationUnitVal = durationUnit || "month";
+
+        // Generate period label
+        const periodLabel = durationValueNum === 1
+            ? `per ${durationUnitVal}`
+            : `per ${durationValueNum} ${durationUnitVal}s`;
+
         const updatedPlan = {
             id: currentPlan ? (currentPlan._id || currentPlan.id) : undefined,
             name: formData.get("name"),
@@ -894,11 +1300,13 @@ function PricingManager({ data, onUpdate, refreshData }) {
             prices: { monthly: formData.get("monthly"), monthlyUSD: formData.get("monthly") },
             description: formData.get("description"),
             cta: formData.get("cta"),
-            period: selectedPeriod,
-            supportType: formData.get("supportType") || "Normal",
+            durationValue: durationValueNum,
+            durationUnit: durationUnitVal,
+            period: periodLabel,
             order: Number(formData.get("order")) || 0,
             highlighted: formData.get("highlighted") === "on",
-            planId: currentPlan && currentPlan.planId ? currentPlan.planId : (formData.get("name") || "").toLowerCase().replace(/\s+/g, '-')
+            planId: currentPlan && currentPlan.planId ? currentPlan.planId : (formData.get("name") || "").toLowerCase().replace(/\s+/g, '-'),
+            features: features
         };
 
         try {
@@ -924,12 +1332,69 @@ function PricingManager({ data, onUpdate, refreshData }) {
         }
     };
 
+    const handleDelete = async (plan) => {
+        const id = plan._id || plan.id;
+        if (!id) {
+            toast.error("Cannot delete plan without ID");
+            return;
+        }
+
+        if (!window.confirm(`Are you sure you want to delete the "${plan.name}" plan? This action cannot be undone.`)) return;
+
+        setIsLoading(true);
+        try {
+            const res = await deletePricingPlan(id);
+            if (res && res.success) {
+                const updatedList = pricingData.filter(p => (p._id || p.id) !== id);
+                setPricingData(updatedList);
+                if (onUpdate) onUpdate(updatedList);
+                toast.success("Pricing plan deleted successfully");
+                if (refreshData) refreshData(true);
+            } else {
+                toast.error("Failed to delete pricing plan");
+            }
+        } catch (error) {
+            console.error(error);
+            toast.error("An error occurred while deleting");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     const filteredPlans = useMemo(() => {
         return pricingData.filter(plan =>
             plan.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
             plan.subtitle?.toLowerCase().includes(searchQuery.toLowerCase())
         );
     }, [pricingData, searchQuery]);
+
+    const [sortConfig, setSortConfig] = useState({ key: "order", direction: "asc" });
+
+    const handleSort = (key) => {
+        setSortConfig(prev => ({
+            key,
+            direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc'
+        }));
+    };
+
+    const getSortIcon = (key) => {
+        if (sortConfig.key !== key) return <ChevronsUpDown className="ml-2 h-3 w-3 opacity-40 shrink-0" />;
+        return sortConfig.direction === 'asc'
+            ? <ArrowUp className="ml-2 h-3 w-3 text-primary shrink-0" />
+            : <ArrowDown className="ml-2 h-3 w-3 text-primary shrink-0" />;
+    };
+
+    const sortedPlans = useMemo(() => {
+        return [...filteredPlans].sort((a, b) => {
+            let aVal = a[sortConfig.key] || 0;
+            let bVal = b[sortConfig.key] || 0;
+            if (typeof aVal === 'string') aVal = aVal.toLowerCase();
+            if (typeof bVal === 'string') bVal = bVal.toLowerCase();
+            if (aVal < bVal) return sortConfig.direction === 'asc' ? -1 : 1;
+            if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1;
+            return 0;
+        });
+    }, [filteredPlans, sortConfig]);
 
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -938,108 +1403,290 @@ function PricingManager({ data, onUpdate, refreshData }) {
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
                         placeholder="Search pricing plans..."
-                        className="pl-10 h-10"
+                        className="pl-10 h-10 ring-offset-background focus-visible:ring-primary/20"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                     />
                 </div>
                 <div className="flex gap-2 w-full md:w-auto">
-                    <Button variant="outline" size="sm" onClick={() => refreshData()} title="Refresh Data" className="h-10">
+                    <Button variant="outline" size="sm" onClick={() => refreshData()} title="Refresh Data" className="h-10 border-primary/10">
                         <RefreshCw className="w-4 h-4 mr-2" />
                         Refresh
                     </Button>
-                    <Button onClick={() => { setCurrentPlan(null); setIsViewMode(false); setIsDialogOpen(true); }} className="h-10 bg-primary shadow-lg shadow-primary/20">
+                    <Button onClick={() => { setCurrentPlan(null); setIsViewMode(false); setIsDialogOpen(true); }} className="h-10 bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 ring-offset-background">
                         <Plus className="w-4 h-4 mr-2" />
                         Add Plan
                     </Button>
                 </div>
             </div>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredPlans.length === 0 && (
-                    <div className="md:col-span-3 py-20 text-center bg-muted/10 rounded-2xl border-2 border-dashed">
-                        <DollarSign className="h-12 w-12 mx-auto text-muted-foreground opacity-20 mb-3" />
-                        <p className="text-lg font-medium">No pricing plans found</p>
-                        <p className="text-sm text-muted-foreground">Try adjusting your search or add a new plan.</p>
-                    </div>
-                )}
-                {filteredPlans.map((plan, index) => (
-                    <Card key={`${plan._id || plan.id || plan.planId || 'plan'}-${index}`} className={plan.highlighted ? "border-primary ring-1 ring-primary" : ""}>
-                        <CardHeader>
-                            <div className="flex justify-between items-start">
-                                <div><CardTitle className="capitalize">{plan.name}</CardTitle><CardDescription>{plan.subtitle}</CardDescription></div>
-                                {plan.highlighted && <Badge>Popular</Badge>}
-                                {plan.supportType === "Within 2 Hours" && <Badge variant="destructive" className="ml-2 animate-pulse">2H Support</Badge>}
-                            </div>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div><div className="text-3xl font-bold">{plan.prices?.monthly}</div><div className="text-sm text-muted-foreground">{plan.period}</div></div>
-                            <div className="flex gap-2">
-                                <Button variant="outline" className="flex-1" onClick={() => { setCurrentPlan(plan); setIsViewMode(false); setIsDialogOpen(true); }}>Edit</Button>
-                                <Button variant="ghost" size="icon" onClick={() => { setCurrentPlan(plan); setIsViewMode(true); setIsDialogOpen(true); }}><Eye className="h-4 w-4" /></Button>
-                            </div>
-                        </CardContent>
-                    </Card>
-                ))}
+
+            <div className="rounded-2xl border bg-card overflow-hidden shadow-sm">
+                <ScrollableContainer maxHeight="70vh">
+                    <Table>
+                        <TableHeader className="bg-muted/30">
+                            <TableRow className="hover:bg-transparent border-b">
+                                <TableHead className="w-[80px]">
+                                    <button onClick={() => handleSort('order')} className="flex items-center hover:text-primary transition-colors font-bold uppercase text-[11px] tracking-wider whitespace-nowrap">
+                                        Order {getSortIcon('order')}
+                                    </button>
+                                </TableHead>
+                                <TableHead>
+                                    <button onClick={() => handleSort('name')} className="flex items-center hover:text-primary transition-colors font-bold uppercase text-[11px] tracking-wider whitespace-nowrap">
+                                        Plan Name {getSortIcon('name')}
+                                    </button>
+                                </TableHead>
+                                <TableHead>Pricing</TableHead>
+                                <TableHead>Duration</TableHead>
+                                <TableHead>Status</TableHead>
+                                <TableHead>Features</TableHead>
+                                <TableHead className="text-right">Actions</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {sortedPlans.length === 0 && (
+                                <TableRow>
+                                    <TableCell colSpan={6} className="h-32 text-center text-muted-foreground italic">
+                                        No pricing plans found.
+                                    </TableCell>
+                                </TableRow>
+                            )}
+                            {sortedPlans.map((plan, index) => (
+                                <TableRow key={`${plan._id || plan.id || plan.planId || 'plan'}-${index}`} className="group hover:bg-muted/20 transition-colors">
+                                    <TableCell className="font-bold text-muted-foreground/60">#{plan.order}</TableCell>
+                                    <TableCell className="font-semibold">
+                                        <div className="flex flex-col">
+                                            <span className="capitalize text-foreground">{plan.name}</span>
+                                            <span className="text-[10px] text-muted-foreground font-medium truncate max-w-[150px]">{plan.subtitle}</span>
+                                        </div>
+                                    </TableCell>
+                                    <TableCell>
+                                        <span className="text-sm font-bold text-primary">
+                                            {plan.prices?.monthly?.toString().startsWith('₹')
+                                                ? plan.prices.monthly
+                                                : (plan.prices?.monthly ? `₹${formatINR(plan.prices.monthly)}` : 'N/A')}
+                                        </span>
+                                    </TableCell>
+                                    <TableCell>
+                                        <div className="flex flex-col">
+                                            <span className="text-xs font-bold capitalize">
+                                                {plan.durationValue && plan.durationUnit ? (
+                                                    `${plan.durationValue} ${plan.durationValue === 1 ? plan.durationUnit : `${plan.durationUnit}s`}`
+                                                ) : (
+                                                    // Fallback to period label if duration fields are missing due to schema sync
+                                                    plan.period?.replace(/per\s+/i, '') || "1 Month"
+                                                )}
+                                            </span>
+                                            <span className="text-[9px] text-muted-foreground uppercase font-medium">{plan.period}</span>
+                                        </div>
+                                    </TableCell>
+                                    <TableCell>
+                                        <div className="flex gap-1.5 flex-wrap">
+                                            {plan.highlighted && <Badge className="bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 border-amber-200/50 text-[10px] px-1.5 py-0">POPULAR</Badge>}
+                                        </div>
+                                    </TableCell>
+                                    <TableCell>
+                                        <div className="flex items-center gap-1.5">
+                                            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                                                <List className="h-3 w-3 text-primary" />
+                                            </div>
+                                            <span className="text-sm font-medium">{plan.features?.length || 0} Features</span>
+                                        </div>
+                                    </TableCell>
+                                    <TableCell className="text-right">
+                                        <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" onClick={() => { setCurrentPlan(plan); setIsViewMode(true); setIsDialogOpen(true); }}><Eye className="h-4 w-4" /></Button>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-primary/70 hover:text-primary" onClick={() => { setCurrentPlan(plan); setIsViewMode(false); setIsDialogOpen(true); }}><Edit className="h-4 w-4" /></Button>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive/70 hover:text-destructive hover:bg-destructive/10" onClick={() => handleDelete(plan)} title="Delete Plan"><Trash2 className="h-4 w-4" /></Button>
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </ScrollableContainer>
             </div>
+
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <DialogContent className="max-h-[85vh] flex flex-col p-0 gap-0">
-                    <DialogHeader className="p-6 pb-2"><DialogTitle>{isViewMode ? "View Plan" : "Edit Plan"}</DialogTitle></DialogHeader>
-                    <ScrollableContainer className="flex-1 p-6 pt-2">
-                        {isViewMode ? (
-                            <div className="space-y-4">
-                                <div className="flex justify-between"><div><h3 className="text-lg font-bold capitalize">{currentPlan?.name}</h3><p className="text-muted-foreground">{currentPlan?.subtitle}</p></div>{currentPlan?.highlighted && <Badge>Popular</Badge>}</div>
-                                <div className="grid grid-cols-2 gap-4 p-4 border rounded-lg"><div><Label>Monthly Price</Label><p className="font-mono">{currentPlan?.prices?.monthly}</p></div></div>
-                                <div><Label>Description</Label><p>{currentPlan?.description}</p></div><div><Label>CTA Text</Label><p>{currentPlan?.cta}</p></div>
+                <DialogContent className="max-w-4xl max-h-[95vh] flex flex-col p-0 gap-0 overflow-hidden rounded-3xl border-none shadow-2xl">
+                    <DialogHeader className="p-8 pb-4 bg-gradient-to-br from-primary/5 via-primary/[0.02] to-transparent border-b">
+                        <div className="flex items-center justify-between mt-2">
+                            <div className="space-y-1">
+                                <DialogTitle className="text-2xl font-bold tracking-tight">
+                                    {isViewMode ? "Plan Details" : currentPlan ? "Configure Plan" : "New Pricing Strategy"}
+                                </DialogTitle>
+                                <DialogDescription className="text-sm font-medium">
+                                    Design and manage the service tiers for your marketplaces.
+                                </DialogDescription>
                             </div>
-                        ) : (
-                            <form id="pricing-form" onSubmit={handleSave} className="space-y-4">
-                                <div className="grid grid-cols-2 gap-4"><div className="grid gap-2"><Label>Name</Label><Input name="name" defaultValue={currentPlan?.name} required /></div><div className="grid gap-2"><Label>Subtitle</Label><Input name="subtitle" defaultValue={currentPlan?.subtitle} /></div></div>
-                                <div className="grid grid-cols-2 gap-4"><div className="grid gap-2"><Label>Monthly Price (e.g. ₹20,000)</Label><Input name="monthly" defaultValue={currentPlan?.prices?.monthly} required /></div></div>
-                                <div className="grid gap-2"><Label>Description</Label><Textarea name="description" defaultValue={currentPlan?.description} /></div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="grid gap-2"><Label>CTA Text</Label><Input name="cta" defaultValue={currentPlan?.cta} /></div>
-                                    <div className="grid gap-2">
-                                        <Label>Period</Label>
-                                        <CreatableCombobox
-                                            value={selectedPeriod}
-                                            onChange={(val) => setSelectedPeriod(formatPeriodLabel(val))}
-                                            options={periodOptions}
-                                            placeholder="Select or create period..."
-                                        />
+                            {!isViewMode && (
+                                <Badge className="bg-primary/10 text-primary border-primary/20 hover:bg-primary/15 h-7">
+                                    DRAFT MODE
+                                </Badge>
+                            )}
+                        </div>
+                    </DialogHeader>
+
+                    <ScrollableContainer className="flex-1 p-8 pt-6 pb-24 scrollbar-none">
+                        {isViewMode ? (
+                            <div className="space-y-8 animate-in fade-in zoom-in-95 duration-300">
+                                <div className="grid md:grid-cols-3 gap-6">
+                                    <div className="md:col-span-2 space-y-6">
+                                        <div className="bg-card p-6 rounded-2xl border shadow-sm">
+                                            <div className="flex items-center justify-between mb-4">
+                                                <div>
+                                                    <h3 className="text-xl font-bold tracking-tight capitalize">{currentPlan?.name}</h3>
+                                                    <p className="text-muted-foreground text-sm font-medium">{currentPlan?.subtitle}</p>
+                                                </div>
+                                                {currentPlan?.highlighted && (
+                                                    <Badge className="bg-amber-500 text-white border-none shadow-md shadow-amber-500/20">POPULAR</Badge>
+                                                )}
+                                            </div>
+                                            <div className="grid grid-cols-1 gap-4 mt-6">
+                                                <div className="p-4 rounded-xl bg-primary/5 border border-primary/10">
+                                                    <Label className="text-[10px] uppercase font-bold text-primary/70 tracking-wider">Public Pricing</Label>
+                                                    <p className="text-2xl font-black text-primary mt-1">{currentPlan?.prices?.monthly}</p>
+                                                    <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest">{currentPlan?.period}</p>
+                                                </div>
+                                            </div>
+                                            <div className="mt-8 space-y-3">
+                                                <Label className="text-sm font-bold flex items-center gap-2">
+                                                    <Check className="h-4 w-4 text-green-500" />
+                                                    Strategic Description
+                                                </Label>
+                                                <p className="text-sm text-muted-foreground leading-relaxed border-l-2 border-primary/20 pl-4">{currentPlan?.description}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-4">
+                                        <Card className="border-none shadow-sm bg-muted/20 h-full">
+                                            <CardHeader className="pb-2"><CardTitle className="text-xs font-bold uppercase tracking-widest text-muted-foreground opacity-70">Client Summary</CardTitle></CardHeader>
+                                            <CardContent className="space-y-4 pt-2">
+                                                <div className="space-y-1">
+                                                    <p className="text-[10px] font-bold text-muted-foreground uppercase">Internal ID</p>
+                                                    <Badge variant="outline" className="font-mono text-[10px] py-0">{currentPlan?.planId}</Badge>
+                                                </div>
+                                                <div className="space-y-1 pt-2">
+                                                    <p className="text-[10px] font-bold text-muted-foreground uppercase">Call to Action</p>
+                                                    <p className="text-sm font-bold border-b pb-1">{currentPlan?.cta}</p>
+                                                </div>
+                                                <div className="pt-4 flex items-center gap-2">
+                                                    <div className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />
+                                                    <span className="text-[10px] font-bold uppercase text-muted-foreground">Active in Production</span>
+                                                </div>
+                                            </CardContent>
+                                        </Card>
                                     </div>
                                 </div>
-                                {/* <div className="grid grid-cols-2 gap-4">
-                                    <div className="grid gap-2"><Label>Order</Label><Input type="number" name="order" defaultValue={currentPlan?.order || 0} /></div>
-                                    <div className="grid gap-2">
-                                        <Label>Support Level</Label>
-                                        <Select name="supportType" defaultValue={currentPlan?.supportType || "Normal"}>
-                                            <SelectTrigger><SelectValue /></SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="Normal">Normal Support (24-48h)</SelectItem>
-                                                <SelectItem value="Within 2 Hours">Emergency Support (2h)</SelectItem>
-                                            </SelectContent>
-                                        </Select>
+
+                                <FeatureListManager isViewMode={true} features={currentPlan?.features} globalFeatures={featuresData} />
+                            </div>
+                        ) : (
+                            <form id="pricing-form" onSubmit={handleSave} className="space-y-10 animate-in fade-in slide-in-from-right-4 duration-500">
+                                <div className="grid lg:grid-cols-2 gap-8">
+                                    <div className="space-y-6">
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="space-y-2">
+                                                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Internal Name</Label>
+                                                <Input name="name" defaultValue={currentPlan?.name} required className="h-11 rounded-xl focus:ring-primary/20" />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Tagline/Subtitle</Label>
+                                                <Input name="subtitle" defaultValue={currentPlan?.subtitle} className="h-11 rounded-xl" />
+                                            </div>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="space-y-2">
+                                                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Display Price (INR)</Label>
+                                                <Input name="monthly" defaultValue={currentPlan?.prices?.monthly} required placeholder="₹45,000" className="h-11 rounded-xl font-bold text-primary" />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Billing Duration</Label>
+                                                <div className="flex gap-2">
+                                                    <Input
+                                                        type="number"
+                                                        name="durationValue"
+                                                        value={durationValue}
+                                                        onChange={(e) => setDurationValue(e.target.value)}
+                                                        className="w-20 h-11 rounded-xl"
+                                                        min="1"
+                                                    />
+                                                    <Select
+                                                        name="durationUnit"
+                                                        value={durationUnit}
+                                                        onValueChange={setDurationUnit}
+                                                    >
+                                                        <SelectTrigger className="h-11 rounded-xl flex-1 bg-background">
+                                                            <SelectValue />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            <SelectItem value="day">Day(s)</SelectItem>
+                                                            <SelectItem value="month">Month(s)</SelectItem>
+                                                            <SelectItem value="year">Year(s)</SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Marketing Description</Label>
+                                            <Textarea name="description" defaultValue={currentPlan?.description} className="rounded-xl min-h-[100px] bg-muted/10 resize-none" />
+                                        </div>
                                     </div>
-                                </div> */}
-                                <div className="flex items-center space-x-2"><Checkbox id="highlighted" name="highlighted" defaultChecked={currentPlan?.highlighted} /><Label htmlFor="highlighted">Highlight as Popular</Label></div>
+
+                                    <div className="space-y-6">
+                                        <Card className="border-none shadow-none bg-muted/30 rounded-2xl">
+                                            <CardContent className="p-6 space-y-6">
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div className="space-y-2">
+                                                        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">CTA Button Text</Label>
+                                                        <Input name="cta" defaultValue={currentPlan?.cta || "Get Started"} className="h-11 rounded-xl bg-background" />
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Sequence Order</Label>
+                                                        <Input type="number" name="order" defaultValue={currentPlan?.order || 0} className="h-11 rounded-xl bg-background" />
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center space-x-3 bg-background/60 p-3 rounded-xl border border-dashed border-primary/20">
+                                                    <Checkbox id="highlighted" name="highlighted" defaultChecked={currentPlan?.highlighted} className="h-5 w-5 rounded-md" />
+                                                    <div className="grid gap-1">
+                                                        <Label htmlFor="highlighted" className="font-bold text-sm tracking-tight cursor-pointer">Badge as High-Value</Label>
+                                                        <p className="text-[10px] text-muted-foreground font-medium italic">Adds a glowing "Popular" tag in the pricing grid.</p>
+                                                    </div>
+                                                </div>
+                                            </CardContent>
+                                        </Card>
+                                    </div>
+                                </div>
+
+                                <FeatureListManager features={features} onChange={setFeatures} globalFeatures={featuresData} isViewMode={false} />
                             </form>
                         )}
                     </ScrollableContainer>
-                    {!isViewMode && (
-                        <DialogFooter className="p-6 pt-2 border-t">
-                            <Button type="submit" form="pricing-form" disabled={isLoading}>
-                                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                Save
+
+                    <DialogFooter className="p-8 bg-background/80 backdrop-blur-md border-t absolute bottom-0 left-0 right-0 z-50">
+                        <div className="flex items-center justify-between w-full">
+                            <Button type="button" variant="ghost" onClick={() => setIsDialogOpen(false)} className="px-6 rounded-xl hover:bg-muted font-bold text-muted-foreground uppercase text-xs tracking-widest">
+                                Close Portal
                             </Button>
-                        </DialogFooter>
-                    )}
+                            {!isViewMode && (
+                                <Button type="submit" form="pricing-form" disabled={isLoading} className="px-8 rounded-xl h-11 bg-primary hover:bg-primary/95 shadow-xl shadow-primary/20 transition-all active:scale-95">
+                                    {isLoading ? (
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    ) : (
+                                        <Shield className="mr-2 h-4 w-4" />
+                                    )}
+                                    <span className="font-bold uppercase tracking-widest text-xs">Authorize & Synchronize</span>
+                                </Button>
+                            )}
+                        </div>
+                    </DialogFooter>
                 </DialogContent>
             </Dialog>
         </div>
     );
 }
 
-// 4. Catalog Manager
 // 4. Catalog Manager
 function CatalogManager({ data, onUpdate, refreshData }) {
     const [services, setServices] = useState(Array.isArray(data) ? data : []);

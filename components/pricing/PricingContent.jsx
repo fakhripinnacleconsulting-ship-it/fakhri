@@ -4,10 +4,17 @@ import { PricingCard } from '@/components/ui/PricingCard';
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion } from "framer-motion";
-import { ArrowRight, Check, HelpCircle } from 'lucide-react';
+import { ArrowRight, Check, HelpCircle, X } from 'lucide-react';
 import FaQ from '../home/FaQ';
 import Within2HoursPricingList from '../within-2-hours/Within2HoursPricingList';
 import { ContactDialog } from '@/components/dialogs/ContactDialog';
+import {
+    Carousel,
+    CarouselContent,
+    CarouselItem,
+    CarouselNext,
+    CarouselPrevious,
+} from "@/components/ui/carousel";
 
 export default function PricingContent({ plans = [], faqs = [], services = [] }) {
 
@@ -37,15 +44,40 @@ export default function PricingContent({ plans = [], faqs = [], services = [] })
             {/* Pricing Cards */}
             <section className="section-padding pt-8">
                 <div className="container-custom">
-                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
-                        {plans.map((plan, index) => (
-                            <PricingCard
-                                key={plan._id}
-                                plan={plan}
-                                index={index}
-                            />
-                        ))}
-                    </div>
+                    {plans.length > 3 ? (
+                        <Carousel
+                            opts={{
+                                align: "start",
+                                loop: true,
+                            }}
+                            className="w-full max-w-7xl mx-auto"
+                        >
+                            <CarouselContent className="-ml-4">
+                                {plans.map((plan, index) => (
+                                    <CarouselItem key={plan._id || index} className="pl-4 md:basis-1/2 lg:basis-1/3">
+                                        <PricingCard
+                                            plan={plan}
+                                            index={index}
+                                        />
+                                    </CarouselItem>
+                                ))}
+                            </CarouselContent>
+                            <div className="hidden md:flex justify-end gap-2 mt-8">
+                                <CarouselPrevious className="static translate-y-0" />
+                                <CarouselNext className="static translate-y-0" />
+                            </div>
+                        </Carousel>
+                    ) : (
+                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+                            {plans.map((plan, index) => (
+                                <PricingCard
+                                    key={plan._id}
+                                    plan={plan}
+                                    index={index}
+                                />
+                            ))}
+                        </div>
+                    )}
 
                     {/* Disclaimer */}
                     <ScrollReveal>
@@ -75,44 +107,56 @@ export default function PricingContent({ plans = [], faqs = [], services = [] })
                         </ScrollReveal>
 
                         <ScrollReveal>
-                            <div className="overflow-x-auto">
-                                <table className="w-full max-w-5xl mx-auto">
+                            <div className="overflow-x-auto pb-4 custom-scrollbar">
+                                <table className="w-full min-w-[700px] max-w-6xl mx-auto border-collapse">
                                     <thead>
-                                        <tr className="border-b border-border">
-                                            <th className="text-left py-4 px-4 font-poppins font-semibold">Feature</th>
+                                        <tr className="border-b border-border bg-background/50 sticky top-0 z-10">
+                                            <th className="text-left py-6 px-4 font-poppins font-semibold sticky left-0 bg-background/95 backdrop-blur-sm z-20 min-w-[200px] shadow-[1px_0_0_0_rgba(0,0,0,0.1)]">Feature</th>
                                             {plans.map((plan) => (
                                                 <th
                                                     key={plan._id}
-                                                    className={`text-center py-4 px-4 font-poppins font-semibold ${plan.highlighted ? 'text-primary' : ''
+                                                    className={`text-center py-6 px-4 font-poppins font-semibold min-w-[150px] ${plan.highlighted ? 'text-primary bg-primary/5' : ''
                                                         }`}
                                                 >
-                                                    {plan.name}
+                                                    <div className="flex flex-col gap-1">
+                                                        <span className="text-sm uppercase tracking-wider opacity-60 font-bold">{plan.period}</span>
+                                                        <span className="text-lg">{plan.name}</span>
+                                                    </div>
                                                 </th>
                                             ))}
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {plans[0].features.map((feature, idx) => (
+                                        {Array.from(new Set(
+                                            plans.flatMap(plan => plan.features?.map(f => f.text) || [])
+                                        )).filter(Boolean).map((featureText, idx) => (
                                             <motion.tr
                                                 key={idx}
-                                                className="border-b border-border/50"
+                                                className="border-b border-border/50 hover:bg-muted/30 transition-colors"
                                                 initial={{ opacity: 0, x: -20 }}
                                                 whileInView={{ opacity: 1, x: 0 }}
                                                 transition={{ delay: idx * 0.05 }}
                                                 viewport={{ once: true }}
                                             >
-                                                <td className="py-4 px-4 text-sm">{feature.text}</td>
-                                                {plans.map((plan) => (
-                                                    <td key={plan._id} className="text-center py-4 px-4">
-                                                        {typeof plan.features[idx].value === 'string' && plan.features[idx].value !== 'true' && plan.features[idx].value !== 'false' ? (
-                                                            <span className="text-sm font-medium text-foreground">{plan.features[idx].value}</span>
-                                                        ) : plan.features[idx].included || plan.features[idx].value === 'true' ? (
-                                                            <Check className="w-5 h-5 text-primary mx-auto" />
-                                                        ) : (
-                                                            <span className="text-muted-foreground/30">—</span>
-                                                        )}
-                                                    </td>
-                                                ))}
+                                                <td className="py-5 px-4 text-sm font-medium sticky left-0 bg-background/95 backdrop-blur-sm z-10 shadow-[1px_0_0_0_rgba(0,0,0,0.1)]">
+                                                    {featureText}
+                                                </td>
+                                                {plans.map((plan) => {
+                                                    const planFeature = plan.features?.find(f => f.text === featureText);
+                                                    return (
+                                                        <td key={plan._id} className={`text-center py-5 px-4 ${plan.highlighted ? 'bg-primary/5' : ''}`}>
+                                                            {planFeature?.included ? (
+                                                                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center mx-auto ring-4 ring-primary/5">
+                                                                    <Check className="w-5 h-5 text-primary" />
+                                                                </div>
+                                                            ) : (
+                                                                <div className="w-8 h-8 rounded-full bg-muted/20 flex items-center justify-center mx-auto">
+                                                                    <X className="w-4 h-4 text-muted-foreground/30" />
+                                                                </div>
+                                                            )}
+                                                        </td>
+                                                    );
+                                                })}
                                             </motion.tr>
                                         ))}
                                     </tbody>
