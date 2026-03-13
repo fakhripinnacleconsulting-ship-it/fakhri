@@ -4,7 +4,7 @@ import {
     CheckSquare, StickyNote, Edit, Save, Calendar, User,
     Filter, ChevronDown, ChevronUp, Clock, ArrowLeft, UserCog, Loader2, Trash2,
     Plus, Eye, X, Mail, Phone, Building2, CreditCard, Check, ChevronsUpDown, Receipt, Layers, Download, Info,
-    ArrowUpDown, ArrowUp, ArrowDown, Send, Copy, CalendarPlus, Search
+    ArrowUpDown, ArrowUp, ArrowDown, Send, Copy, CalendarPlus, Search, AlertTriangle
 } from "lucide-react";
 import dynamic from 'next/dynamic';
 const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false });
@@ -33,6 +33,7 @@ import {
     getActiveTaskCounts,
     upsertClient,
     deleteClient,
+    bulkDeleteClients,
     deleteTask,
     upsertTask,
     upsertNote,
@@ -482,6 +483,11 @@ const SuperAdminClientsTab = () => {
     const [showIndividualExtend, setShowIndividualExtend] = useState(null); // client object
     const [individualExtendDate, setIndividualExtendDate] = useState("");
     const [isIndividualExtending, setIsIndividualExtending] = useState(false);
+
+    // Bulk Delete states
+    const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
+    const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+    const [bulkDeleteConfirmText, setBulkDeleteConfirmText] = useState("");
 
     // Helper: get remaining days of plan using subscriptionEnd field
     const getRemainingDays = (client) => {
@@ -1197,31 +1203,87 @@ const SuperAdminClientsTab = () => {
                     const sheet = workbook.Sheets[sheetName];
                     const parsed = xlsx.utils.sheet_to_json(sheet, { defval: "" });
 
-                    const mappedClients = parsed.map(row => ({
-                        manager: row['Admin Name'] || 'Unassigned',
-                        teams: [], // Can parse if needed
-                        supervisor: row['Supervisor'] || '',
-                        spCentralRequestId: row['SP Central Request ID'] || '',
-                        company: row['Company Name'] || '',
-                        name: row['Seller Name'] || row['Contact Name'] || 'Unknown Client',
-                        email: row['Email ID'] || '',
-                        phone: row['Phone Number'] || '',
-                        merchantToken: row['Customer ID/Merchant Token'] || '',
-                        stage: row['Stage'] || '',
-                        marketplace: row['Marketplace'] || '',
-                        userPermission: row['User Permission Access Name'] || row['User Permission Access Link'] || '',
-                        accountAccessUrl: row['Merchant Account Access Link'] || '',
-                        leadSource: row['Lead Source'] || '',
-                        salesManager: row['Sales Manager'] || '',
-                        plan: row['Plan'] || 'None',
-                        supportType: row['Support SLA (TAT)'] || '',
-                        launchWeek: row['Launch Week No.'] || '',
-                        subscriptionStart: row['Subscription Start Date'] || '',
-                        subscriptionEnd: row['Subscription End Date'] || '',
-                        poeUrl: row['POE (Proof Of Engagement)'] || '',
-                        discount: row['Discount'] || '',
-                        status: 'active'
-                    })).filter(c => c.email && String(c.email).trim() !== '');
+                    // Helper: parse DD/MM/YYYY or other date formats into ISO string
+                    const parseDate = (val) => {
+                        if (!val) return '';
+                        const str = String(val).trim();
+                        // Handle DD/MM/YYYY format
+                        const ddmmyyyy = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+                        if (ddmmyyyy) {
+                            const [, day, month, year] = ddmmyyyy;
+                            const d = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+                            if (!isNaN(d.getTime())) return d.toISOString();
+                        }
+                        // Handle Excel serial date numbers
+                        if (typeof val === 'number' && val > 40000 && val < 60000) {
+                            const excelEpoch = new Date(1899, 11, 30);
+                            const d = new Date(excelEpoch.getTime() + val * 86400000);
+                            if (!isNaN(d.getTime())) return d.toISOString();
+                        }
+                        // Try native parsing as fallback
+                        const d = new Date(str);
+                        if (!isNaN(d.getTime())) return d.toISOString();
+                        return str;
+                    };
+
+                    // Helper: format discount (0.2 → "20%", "20%" → "20%", etc.)
+                    const parseDiscount = (val) => {
+                        if (val === '' || val === null || val === undefined) return '';
+                        if (typeof val === 'number') {
+                            // Values like 0.2 mean 20%
+                            return val < 1 ? `${Math.round(val * 100)}%` : `${val}%`;
+                        }
+                        return String(val).trim();
+                    };
+
+                    // Resolve team names to team IDs
+                    const resolveTeamIds = (teamValue) => {
+                        if (!teamValue) return [];
+                        const teamNames = String(teamValue).split(',').map(t => t.trim()).filter(Boolean);
+                        const resolvedIds = [];
+                        for (const tName of teamNames) {
+                            const matchedTeam = teams.find(t =>
+                                t.name && t.name.toLowerCase() === tName.toLowerCase()
+                            );
+                            if (matchedTeam) resolvedIds.push(matchedTeam._id);
+                        }
+                        return resolvedIds;
+                    };
+
+                    const mappedClients = parsed.map(row => {
+                        // Ensure phone & merchant token are always strings
+                        const phone = row['Phone Number'] !== '' && row['Phone Number'] !== undefined
+                            ? String(row['Phone Number']).trim() : '';
+                        const merchantToken = row['Customer ID/Merchant Token'] !== '' && row['Customer ID/Merchant Token'] !== undefined
+                            ? String(row['Customer ID/Merchant Token']).trim() : '';
+                        const email = row['Email ID'] ? String(row['Email ID']).trim().toLowerCase() : '';
+
+                        return {
+                            manager: row['Admin Name'] || 'Unassigned',
+                            teams: resolveTeamIds(row['Team']),
+                            supervisor: row['Supervisor'] || '',
+                            spCentralRequestId: row['SP Central Request ID'] || '',
+                            company: row['Company Name'] || '',
+                            name: row['Seller Name'] || row['Contact Name'] || 'Unknown Client',
+                            email,
+                            phone,
+                            merchantToken,
+                            stage: row['Stage'] || '',
+                            marketplace: row['Marketplace'] || '',
+                            userPermission: row['User Permission Access Name'] || row['User Permission Access Link'] || '',
+                            accountAccessUrl: row['Merchant Account Access Link'] || '',
+                            leadSource: row['Lead Source'] || '',
+                            salesManager: row['Sales Manager'] || '',
+                            plan: row['Plan'] || 'None',
+                            supportType: row['Support SLA (TAT)'] || '',
+                            launchWeek: row['Launch Week No.'] ? String(row['Launch Week No.']).trim() : '',
+                            subscriptionStart: parseDate(row['Subscription Start Date']),
+                            subscriptionEnd: parseDate(row['Subscription End Date']),
+                            poeUrl: row['POE (Proof Of Engagement)'] || '',
+                            discount: parseDiscount(row['Discount']),
+                            status: 'active'
+                        };
+                    }).filter(c => c.email && c.email.trim() !== '');
 
                     if (mappedClients.length === 0) {
                         toast.error("No valid client rows found (email is required).");
@@ -1518,6 +1580,10 @@ const SuperAdminClientsTab = () => {
                                 <Button variant="outline" size="sm" onClick={() => { setExtendDays(30); setShowExtendModal(true); }} className="border-emerald-500 text-emerald-600 hover:bg-emerald-50 h-9">
                                     <CalendarPlus className="h-4 w-4 mr-2" />
                                     Extend Sub. ({selectedClientIds.length})
+                                </Button>
+                                <Button variant="outline" size="sm" onClick={() => { setBulkDeleteConfirmText(""); setShowBulkDeleteModal(true); }} className="border-destructive text-destructive hover:bg-destructive/10 h-9">
+                                    <Trash2 className="h-4 w-4 mr-2" />
+                                    Delete ({selectedClientIds.length})
                                 </Button>
                             </>
                         )}
@@ -2564,6 +2630,111 @@ const SuperAdminClientsTab = () => {
                                         <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Saving...</>
                                     ) : (
                                         <><Save className="h-4 w-4 mr-2" /> Save End Date</>
+                                    )}
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Bulk Delete Confirmation Modal */}
+                {showBulkDeleteModal && (
+                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setShowBulkDeleteModal(false)}>
+                        <div className="bg-card rounded-xl border shadow-2xl w-full max-w-lg animate-in zoom-in-95" onClick={e => e.stopPropagation()}>
+                            <div className="flex items-center justify-between p-6 pb-4 border-b">
+                                <div>
+                                    <h3 className="font-heading font-semibold text-lg flex items-center gap-2 text-destructive">
+                                        <AlertTriangle className="h-5 w-5" />
+                                        Delete Selected Clients
+                                    </h3>
+                                    <p className="text-sm text-muted-foreground mt-1">
+                                        You are about to permanently delete {selectedClientIds.length} client(s)
+                                    </p>
+                                </div>
+                                <Button variant="ghost" size="sm" onClick={() => setShowBulkDeleteModal(false)}>
+                                    <X className="h-4 w-4" />
+                                </Button>
+                            </div>
+                            <div className="p-6 space-y-4">
+                                {/* Warning Banner */}
+                                <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-4">
+                                    <div className="flex items-start gap-3">
+                                        <AlertTriangle className="h-5 w-5 text-destructive mt-0.5 shrink-0" />
+                                        <div className="space-y-1">
+                                            <p className="text-sm font-semibold text-destructive">This action is irreversible!</p>
+                                            <p className="text-xs text-destructive/80">
+                                                All selected client accounts, their associated data references, and admin assignments will be permanently removed from the system. This cannot be undone.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Selected clients list */}
+                                <div className="space-y-2">
+                                    <Label className="text-sm font-medium">Clients to be deleted</Label>
+                                    <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto p-3 border rounded-lg bg-muted/30" style={{ scrollbarWidth: 'thin' }}>
+                                        {clients.filter(c => selectedClientIds.includes(c._id)).map(c => (
+                                            <Badge key={c._id} variant="outline" className="text-xs border-destructive/30 text-destructive bg-destructive/5">
+                                                <Trash2 className="h-3 w-3 mr-1 opacity-60" />
+                                                {c.name} {c.company ? `(${c.company})` : ''}
+                                            </Badge>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Typed confirmation */}
+                                <div className="space-y-2">
+                                    <Label className="text-sm font-medium">
+                                        Type <span className="font-mono bg-destructive/10 text-destructive px-1.5 py-0.5 rounded text-xs">DELETE</span> to confirm
+                                    </Label>
+                                    <Input
+                                        placeholder="Type DELETE here..."
+                                        value={bulkDeleteConfirmText}
+                                        onChange={(e) => setBulkDeleteConfirmText(e.target.value)}
+                                        className="border-destructive/30 focus-visible:ring-destructive/30"
+                                        autoComplete="off"
+                                    />
+                                </div>
+                            </div>
+                            <div className="flex justify-end gap-2 p-6 pt-4 border-t">
+                                <Button variant="outline" onClick={() => setShowBulkDeleteModal(false)} disabled={isBulkDeleting}>Cancel</Button>
+                                <Button
+                                    variant="destructive"
+                                    disabled={isBulkDeleting || bulkDeleteConfirmText !== 'DELETE'}
+                                    onClick={async () => {
+                                        setIsBulkDeleting(true);
+                                        try {
+                                            const res = await bulkDeleteClients(selectedClientIds);
+                                            if (res?.success) {
+                                                toast.success(`Successfully deleted ${res.deleted} client(s)`);
+                                                if (res.failed > 0) {
+                                                    toast.error(`Failed to delete ${res.failed} client(s)`);
+                                                }
+                                                // Remove deleted clients from local state
+                                                setClients(prev => prev.filter(c => !selectedClientIds.includes(c._id)));
+                                                // Clear selection & close modal
+                                                setSelectedClientIds([]);
+                                                setShowBulkDeleteModal(false);
+                                                setBulkDeleteConfirmText("");
+                                                // If currently viewing a deleted client, go back to list
+                                                if (selectedClient && selectedClientIds.includes(selectedClient._id)) {
+                                                    setSelectedClient(null);
+                                                }
+                                            } else {
+                                                toast.error(res?.error || "Failed to delete clients");
+                                            }
+                                        } catch (err) {
+                                            console.error(err);
+                                            toast.error("An error occurred while deleting clients");
+                                        } finally {
+                                            setIsBulkDeleting(false);
+                                        }
+                                    }}
+                                >
+                                    {isBulkDeleting ? (
+                                        <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Deleting...</>
+                                    ) : (
+                                        <><Trash2 className="h-4 w-4 mr-2" /> Delete {selectedClientIds.length} Client(s)</>
                                     )}
                                 </Button>
                             </div>
