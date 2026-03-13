@@ -172,7 +172,7 @@ const DashboardTab = ({ setActiveTab, currentUser }) => {
                     getDashboardStats({ startDate, endDate }),
                     getUsers({ role: 'client', limit: 5 }),
                     getUsers({ role: 'client', limit: 2000 }),
-                    getAdmins(),
+                    getAdmins({ startDate, endDate }),
                     getSalesAnalytics({ startDate, endDate, groupBy })
                 ]);
 
