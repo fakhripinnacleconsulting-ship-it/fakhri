@@ -66,7 +66,7 @@ export default function LegalPageContent({ page }) {
                         {/* Footer Note */}
                         <div className="mt-16 pt-8 border-t border-border flex flex-col md:flex-row justify-between items-center gap-6">
                             <p className="text-sm text-muted-foreground italic">
-                                If you have any questions about this {page.title.toLowerCase()}, please contact us at <a href="mailto:info@fakhriit.com" className="text-primary font-bold hover:underline">info@fakhriit.com</a>
+                                If you have any questions about this {page.title.toLowerCase()}, please contact us at <a href="mailto:info@fakhriitservices.com" className="text-primary font-bold hover:underline">info@fakhriitservices.com</a>
                             </p>
                             <Link href="/contact" className="btn-primary whitespace-nowrap">
                                 Contact Legal Team

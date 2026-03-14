@@ -252,14 +252,35 @@ const SupportTab = ({ currentUser }) => {
                         )}
                     </div>
 
-                    {/* Additional Help */}
-                    <div className="bg-accent/50 rounded-xl p-4">
-                        <p className="text-sm text-muted-foreground text-center">
-                            Need immediate assistance? Contact your account manager or email us at{" "}
-                            <a href="mailto:support@fakhriit.com" className="text-primary hover:underline font-medium">
-                                support@fakhriit.com
-                            </a>
-                        </p>
+                    {/* Additional Help & Contact Departments */}
+                    <div className="bg-card rounded-xl border p-6">
+                        <h3 className="font-heading font-semibold text-lg mb-4">Contact Departments</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-muted-foreground">
+                            <div>
+                                <span className="font-medium text-foreground block">Support</span>
+                                <a href="mailto:support@fakhriitservices.com" className="text-primary hover:underline transition-colors">support@fakhriitservices.com</a>
+                            </div>
+                            <div>
+                                <span className="font-medium text-foreground block">Sales</span>
+                                <a href="mailto:sales@fakhriitservices.com" className="text-primary hover:underline transition-colors">sales@fakhriitservices.com</a>
+                            </div>
+                            <div>
+                                <span className="font-medium text-foreground block">Finance</span>
+                                <a href="mailto:finance@fakhriitservices.com" className="text-primary hover:underline transition-colors">finance@fakhriitservices.com</a>
+                            </div>
+                            <div>
+                                <span className="font-medium text-foreground block">Escalations</span>
+                                <a href="mailto:escalations@fakhriitservices.com" className="text-primary hover:underline transition-colors">escalations@fakhriitservices.com</a>
+                            </div>
+                            <div>
+                                <span className="font-medium text-foreground block">Feedback</span>
+                                <a href="mailto:feedback@fakhriitservices.com" className="text-primary hover:underline transition-colors">feedback@fakhriitservices.com</a>
+                            </div>
+                            <div>
+                                <span className="font-medium text-foreground block">General Inquiry</span>
+                                <a href="mailto:info@fakhriitservices.com" className="text-primary hover:underline transition-colors">info@fakhriitservices.com</a>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

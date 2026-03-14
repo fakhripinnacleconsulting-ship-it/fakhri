@@ -227,9 +227,9 @@ const ClientDashboardTab = ({ setActiveTab, currentUser }) => {
                             </div>
                             <div className="flex-1">
                                 <p className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium">Need Support?</p>
-                                <a href="mailto:support@fakhriit.com" className="text-sm text-primary font-medium flex items-center gap-1 hover:underline">
+                                <a href="mailto:support@fakhriitservices.com" className="text-sm text-primary font-medium flex items-center gap-1 hover:underline">
                                     <Mail className="h-3 w-3" />
-                                    support@fakhriit.com
+                                    support@fakhriitservices.com
                                 </a>
                             </div>
                         </div>

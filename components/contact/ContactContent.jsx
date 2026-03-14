@@ -139,10 +139,10 @@ export default function ContactContent({ company = null }) {
                                 </div>
                                 <h3 className="font-poppins font-semibold mb-2">Email</h3>
                                 <a
-                                    href={`mailto:${company?.contact?.email?.info || ''}`}
+                                    href={`mailto:${company?.contact?.email?.info || 'info@fakhriitservices.com'}`}
                                     className="text-muted-foreground text-sm hover:text-primary transition-colors"
                                 >
-                                    {company?.contact?.email?.info || 'info@fakhriit.com'}
+                                    {company?.contact?.email?.info || 'info@fakhriitservices.com'}
                                 </a>
                             </motion.div>
                         </StaggerItem>
@@ -325,6 +325,37 @@ export default function ContactContent({ company = null }) {
                                     <p className="text-sm text-muted-foreground mt-4">
                                         All times in IST (Indian Standard Time)
                                     </p>
+                                </div>
+
+                                {/* Department Contacts */}
+                                <div className="bg-card rounded-2xl p-8 border border-border">
+                                    <h3 className="font-poppins font-semibold text-lg mb-4">Department Contacts</h3>
+                                    <div className="flex flex-col gap-3">
+                                        <div className="flex justify-between items-center text-sm border-b border-border pb-2">
+                                            <span className="text-muted-foreground">Support</span>
+                                            <a href="mailto:support@fakhriitservices.com" className="font-medium hover:text-primary transition-colors">support@fakhriitservices.com</a>
+                                        </div>
+                                        <div className="flex justify-between items-center text-sm border-b border-border pb-2">
+                                            <span className="text-muted-foreground">Sales</span>
+                                            <a href="mailto:sales@fakhriitservices.com" className="font-medium hover:text-primary transition-colors">sales@fakhriitservices.com</a>
+                                        </div>
+                                        <div className="flex justify-between items-center text-sm border-b border-border pb-2">
+                                            <span className="text-muted-foreground">Finance</span>
+                                            <a href="mailto:finance@fakhriitservices.com" className="font-medium hover:text-primary transition-colors">finance@fakhriitservices.com</a>
+                                        </div>
+                                        <div className="flex justify-between items-center text-sm border-b border-border pb-2">
+                                            <span className="text-muted-foreground">Escalations</span>
+                                            <a href="mailto:escalations@fakhriitservices.com" className="font-medium hover:text-primary transition-colors">escalations@fakhriitservices.com</a>
+                                        </div>
+                                        <div className="flex justify-between items-center text-sm border-b border-border pb-2">
+                                            <span className="text-muted-foreground">Feedback</span>
+                                            <a href="mailto:feedback@fakhriitservices.com" className="font-medium hover:text-primary transition-colors">feedback@fakhriitservices.com</a>
+                                        </div>
+                                        <div className="flex justify-between items-center text-sm">
+                                            <span className="text-muted-foreground">General</span>
+                                            <a href="mailto:info@fakhriitservices.com" className="font-medium hover:text-primary transition-colors">info@fakhriitservices.com</a>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 {/* Social Links */}

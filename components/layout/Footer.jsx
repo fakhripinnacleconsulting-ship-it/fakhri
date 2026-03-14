@@ -142,10 +142,10 @@ export default function Footer({ company }) {
                             <li className="flex items-center gap-3">
                                 <Mail size={18} className="text-primary flex-shrink-0" />
                                 <a
-                                    href={`mailto:${company?.contact?.email?.info || ''}`}
+                                    href={`mailto:${company?.contact?.email?.info || 'info@fakhriitservices.com'}`}
                                     className="text-background/70 hover:text-background transition-colors text-sm"
                                 >
-                                    {company?.contact?.email?.info || 'info@fakhriit.com'}
+                                    {company?.contact?.email?.info || 'info@fakhriitservices.com'}
                                 </a>
                             </li>
                         </ul>

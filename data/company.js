@@ -33,8 +33,12 @@ export const companyData = {
             whatsapp: "8982675004",
         },
         email: {
+            support: "support@fakhriitservices.com",
+            sales: "sales@fakhriitservices.com",
+            finance: "finance@fakhriitservices.com",
+            escalations: "escalations@fakhriitservices.com",
+            feedback: "feedback@fakhriitservices.com",
             info: "info@fakhriitservices.com",
-            support: "info@fakhriitservices.com",
             general: "info@fakhriitservices.com",
         },
         social: {
