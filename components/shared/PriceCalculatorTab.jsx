@@ -1,60 +1,40 @@
 
 "use client";
 
-import { Card } from "@/components/ui/card";
-import { Loader2, ExternalLink, RefreshCw } from "lucide-react";
-import { useState } from "react";
+import { Calculator, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function PriceCalculatorTab() {
-    const [loading, setLoading] = useState(true);
-    const iframeUrl = "https://www.youtube.com/embed/LJO6ImIcJmU";
-
-    const handleRefresh = () => {
-        setLoading(true);
-        const iframe = document.getElementById("price-calculator-iframe");
-        if (iframe) {
-            iframe.src = iframeUrl;
-        }
-    };
+    const calculatorUrl = "https://sellercentral.amazon.in/revcal";
 
     return (
-        <div className="space-y-4">
-            <div className="flex items-center justify-between">
+        <div className="space-y-6">
+            <div>
                 <h2 className="text-2xl font-bold font-heading">Price Calculator</h2>
-                <div className="flex gap-2">
-                    <Button variant="outline" size="sm" onClick={handleRefresh}>
-                        <RefreshCw className="h-4 w-4 mr-2" />
-                        Refresh
-                    </Button>
-                    <Button variant="outline" size="sm" asChild>
-                        <a href={iframeUrl} target="_blank" rel="noopener noreferrer">
-                            <ExternalLink className="h-4 w-4 mr-2" />
-                            Open in New Tab
-                        </a>
-                    </Button>
-                </div>
+                <p className="text-muted-foreground mt-1">Calculate your Amazon product pricing, fees, and margins.</p>
             </div>
 
-            <Card className="overflow-hidden border-none shadow-xl bg-white relative h-[calc(100vh-200px)] min-h-[600px]">
-                {loading && (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-white z-10 transition-opacity">
-                        <Loader2 className="h-10 w-10 animate-spin text-primary mb-2" />
-                        <p className="text-muted-foreground animate-pulse">Connecting to Amazon price calculator...</p>
-                        <p className="text-[10px] text-muted-foreground mt-4 max-w-xs text-center px-4">
-                            Note: Amazon may block loading this page in an iframe for security reasons. If the page doesn't load, use the "Open in New Tab" button.
-                        </p>
-                    </div>
-                )}
-                <iframe
-                    id="price-calculator-iframe"
-                    src={iframeUrl}
-                    className="w-full h-full border-none"
-                    onLoad={() => setLoading(false)}
-                    sandbox="allow-forms allow-modals allow-popups allow-popups-to-escape-sandbox allow-scripts allow-same-origin"
-                    title="Amazon price calculator"
-                />
-            </Card>
+            <div className="bg-card rounded-2xl border p-8 md:p-12 flex flex-col items-center text-center max-w-2xl mx-auto">
+                <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-6">
+                    <Calculator className="h-8 w-8 text-primary" />
+                </div>
+
+                <h3 className="text-xl font-heading font-semibold mb-2">Amazon Revenue Calculator</h3>
+                <p className="text-muted-foreground mb-8 max-w-md">
+                    Use Amazon Seller Central's official Revenue Calculator to estimate your product fees, margins, and profitability.
+                </p>
+
+                <Button size="lg" className="font-semibold px-8" asChild>
+                    <a href={calculatorUrl} target="_blank" rel="noopener noreferrer">
+                        <ExternalLink className="h-5 w-5 mr-2" />
+                        Open Price Calculator
+                    </a>
+                </Button>
+
+                <p className="text-xs text-muted-foreground mt-4">
+                    Opens Amazon Seller Central in a new tab. You may need to sign in with your Amazon seller account.
+                </p>
+            </div>
         </div>
     );
 }
