@@ -13,7 +13,7 @@ import { toast } from "sonner";
 
 const calculatePeriodDays = (period) => {
     const p = period?.toLowerCase() || "";
-    if (p.includes('month')) return 28;
+    if (p.includes('month')) return 30;
     if (p.includes('year')) return 365;
     if (p.includes('quarter')) return 90;
     return 30; // default

@@ -196,7 +196,7 @@ const ClientPlanTab = ({ currentUser, managerPhone, managerName }) => {
     // Dates & Expiry Calculation
     // Use subscriptionEnd from DB if available, otherwise fallback to old calculation
     const purchaseDate = client?.subscriptionStart ? new Date(client.subscriptionStart) : (client?.joinedDate ? new Date(client.joinedDate) : new Date());
-    
+
     let expiryDate;
     if (client?.subscriptionEnd) {
         expiryDate = new Date(client.subscriptionEnd);
