@@ -187,6 +187,8 @@ const InvoiceLayout = forwardRef(({ invoice }, ref) => {
                                 State: {buyerStateName} | Code: {buyerStateCode}
                             </p>
                         )}
+                        {client.email && <p>{client.email}</p>}
+                        {client.phone && <p>{client.phone}</p>}
                     </div>
                 </div>
                 <div className="text-right flex flex-col justify-start gap-1">

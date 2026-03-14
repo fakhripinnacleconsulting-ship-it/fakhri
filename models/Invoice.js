@@ -4,6 +4,8 @@ const InvoiceSchema = new mongoose.Schema({
     invoiceNumber: { type: String, unique: true, required: true },
     client: {
         name: { type: String, required: true },
+        email: { type: String },
+        phone: { type: String },
         company: { type: String },
         address: { type: String },
         city: { type: String },
