@@ -21,9 +21,7 @@ const AdminProfileTab = dynamic(() => import("@/components/admin/tabs/ProfileTab
 const PriceCalculatorTab = dynamic(() => import("@/components/shared/PriceCalculatorTab"), {
     loading: () => <div className="h-96 flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
 });
-const AnalyticsTab = dynamic(() => import("@/components/super-admin/tabs/AnalyticsTab"), {
-    loading: () => <div className="h-96 flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
-});
+
 
 export default function AdminTabPage({ params }) {
     const { tab: tabName } = use(params);
@@ -33,7 +31,6 @@ export default function AdminTabPage({ params }) {
     if (tabName === "tasks") return <AdminTasksTab currentUser={currentUser} />;
     if (tabName === "files") return <AdminFilesTab currentUser={currentUser} />;
     if (tabName === "price-calculator") return <PriceCalculatorTab />;
-    if (tabName === "analytics") return <AnalyticsTab fixedEmail={currentUser?.email} />;
     if (tabName === "profile") return <AdminProfileTab currentUser={currentUser} />;
 
     return <div className="p-8 text-center text-muted-foreground">Tab not found</div>;

@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef, createContext } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, Users, CheckSquare, FileText, User, Menu, X, LogOut, Loader2, MessageSquare, ShieldAlert, Calculator, ChevronLeft, ChevronRight, LineChart } from "lucide-react";
+import { LayoutDashboard, Users, CheckSquare, FileText, User, Menu, X, LogOut, Loader2, MessageSquare, ShieldAlert, Calculator, ChevronLeft, ChevronRight } from "lucide-react";
 import Logo from "@/components/ui/Logo";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -26,7 +26,6 @@ const navigation = [
   { name: "Tasks", id: "Tasks", href: "/admin/dashboard/tasks", icon: CheckSquare },
   { name: "Files", id: "Files", href: "/admin/dashboard/files", icon: FileText },
   { name: "Price Calculator", id: "PriceCalculator", href: "/admin/dashboard/price-calculator", icon: Calculator },
-  { name: "Analytics", id: "Analytics", href: "/admin/dashboard/analytics", icon: LineChart },
   { name: "Profile", id: "Profile", href: "/admin/dashboard/profile", icon: User },
 ];
 import { cn } from "@/lib/utils";

@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef, Suspense, createContext } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams, useRouter } from "next/navigation";
-import { LayoutDashboard, CreditCard, CheckSquare, FileText, Receipt, User, Menu, X, LogOut, HelpCircle, Loader2, ChevronLeft, ChevronRight, LineChart } from "lucide-react";
+import { LayoutDashboard, CreditCard, CheckSquare, FileText, Receipt, User, Menu, X, LogOut, HelpCircle, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import Logo from "@/components/ui/Logo";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -31,7 +31,6 @@ const navigation = [
   { name: "Files", id: "Files", href: "/client/dashboard/files", icon: FileText },
   { name: "Billing", id: "Billing", href: "/client/dashboard/billing", icon: Receipt },
   { name: "Support", id: "Support", href: "/client/dashboard/support", icon: HelpCircle },
-  { name: "Analytics", id: "Analytics", href: "/client/dashboard/analytics", icon: LineChart },
   { name: "Profile", id: "Profile", href: "/client/dashboard/profile", icon: User },
 ];
 

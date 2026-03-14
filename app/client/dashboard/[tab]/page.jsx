@@ -35,9 +35,7 @@ const ClientProfileTab = dynamic(() => import("@/components/client/tabs/ProfileT
 const ClientSupportTab = dynamic(() => import("@/components/client/tabs/SupportTab"), {
     loading: () => <TabSkeleton />,
 });
-const AnalyticsTab = dynamic(() => import("@/components/super-admin/tabs/AnalyticsTab"), {
-    loading: () => <TabSkeleton />,
-});
+
 
 export default function ClientTabPage({ params }) {
     const { tab: tabName } = use(params);
@@ -48,7 +46,6 @@ export default function ClientTabPage({ params }) {
     if (tabName === "files") return <ClientFilesTab currentUser={user} />;
     if (tabName === "billing") return <ClientBillingTab currentUser={user} />;
     if (tabName === "support") return <ClientSupportTab currentUser={user} />;
-    if (tabName === "analytics") return <AnalyticsTab fixedEmail={user?.email} />;
     if (tabName === "profile") return <ClientProfileTab currentUser={user} />;
 
     return <div className="p-8 text-center text-muted-foreground">Tab not found</div>;
