@@ -35,6 +35,13 @@ function CheckoutContent() {
     const [appliedCoupon, setAppliedCoupon] = useState(null);
     const [discount, setDiscount] = useState(0);
 
+    // Upgrade discount from query params
+    const upgradeDiscountAmount = parseFloat(searchParams.get("upgradeDiscount")) || 0;
+    const currentPlanParam = searchParams.get("currentPlan") || "";
+    const remainingDaysParam = parseInt(searchParams.get("remainingDays")) || 0;
+    const remainingValueParam = parseFloat(searchParams.get("remainingValue")) || 0;
+    const isUpgrade = upgradeDiscountAmount > 0;
+
     const [formData, setFormData] = useState({
         name: "",
         email: "",
@@ -134,7 +141,9 @@ function CheckoutContent() {
             subtotal += planPrice;
         }
 
-        const discountedSubtotal = Math.max(0, subtotal - discount);
+        // Apply upgrade discount first, then coupon discount
+        const afterUpgradeDiscount = Math.max(0, subtotal - upgradeDiscountAmount);
+        const discountedSubtotal = Math.max(0, afterUpgradeDiscount - discount);
         const taxRate = 18;
 
         let cgst = 0, sgst = 0, igst = 0, utgst = 0;
@@ -251,7 +260,9 @@ function CheckoutContent() {
                         paymentId: null,
                         orderId: null,
                         signature: null,
-                        couponCode: appliedCoupon?.code
+                        couponCode: appliedCoupon?.code,
+                        upgradeDiscount: isUpgrade ? upgradeDiscountAmount : 0,
+                        currentPlan: currentPlanParam
                     });
 
                     if (result.success) {
@@ -338,7 +349,9 @@ function CheckoutContent() {
                             paymentId: response.razorpay_payment_id,
                             orderId: response.razorpay_order_id,
                             signature: response.razorpay_signature,
-                            couponCode: appliedCoupon?.code
+                            couponCode: appliedCoupon?.code,
+                            upgradeDiscount: isUpgrade ? upgradeDiscountAmount : 0,
+                            currentPlan: currentPlanParam
                         });
 
                         if (result.success) {
@@ -611,8 +624,8 @@ function CheckoutContent() {
                                             <p className="text-xs text-muted-foreground">
                                                 {planDetails.period.toLowerCase().includes('month') ? 'Monthly Subscription' : `${planDetails.period} Plan`}
                                             </p>
-                                            <span className="inline-block mt-1 px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-bold rounded">
-                                                SUBSCRIPTION
+                                            <span className={`inline-block mt-1 px-2 py-0.5 text-[10px] font-bold rounded ${isUpgrade ? 'bg-green-50 text-green-600' : 'bg-primary/10 text-primary'}`}>
+                                                {isUpgrade ? 'PLAN UPGRADE' : 'SUBSCRIPTION'}
                                             </span>
                                         </div>
                                         <p className="font-medium">{planDetails.prices?.monthly || "Custom"}</p>
@@ -694,6 +707,15 @@ function CheckoutContent() {
                                     <div className="flex justify-between text-green-600 font-medium">
                                         <span>Coupon Discount</span>
                                         <span>-₹{discount.toLocaleString('en-IN')}</span>
+                                    </div>
+                                )}
+                                {isUpgrade && upgradeDiscountAmount > 0 && (
+                                    <div className="flex justify-between text-green-600 font-medium">
+                                        <span className="flex items-center gap-1">
+                                            <span>Upgrade Discount</span>
+                                            <span className="text-[10px] text-green-500 font-normal">(75% of remaining value)</span>
+                                        </span>
+                                        <span>-₹{upgradeDiscountAmount.toLocaleString('en-IN')}</span>
                                     </div>
                                 )}
                                 {igst > 0 ? (

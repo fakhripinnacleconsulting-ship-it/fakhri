@@ -1,4 +1,5 @@
 'use client';
+import { useState, useEffect, useMemo } from 'react';
 import { ScrollReveal } from '@/components/animations/ScrollReveal';
 import { PricingCard } from '@/components/ui/PricingCard';
 import Link from 'next/link';
@@ -8,6 +9,9 @@ import { ArrowRight, Check, HelpCircle, X } from 'lucide-react';
 import FaQ from '../home/FaQ';
 import Within2HoursPricingList from '../within-2-hours/Within2HoursPricingList';
 import { ContactDialog } from '@/components/dialogs/ContactDialog';
+import { useSession } from "next-auth/react";
+import { getUserById } from "@/lib/actions/user";
+import { parsePlanPrice, calculateUpgradeDiscount } from "@/lib/utils";
 import {
     Carousel,
     CarouselContent,
@@ -17,9 +21,54 @@ import {
 } from "@/components/ui/carousel";
 
 export default function PricingContent({ plans = [], faqs = [], services = [] }) {
+    const { data: session, status } = useSession();
+    const [userProfile, setUserProfile] = useState(null);
 
+    // Fetch full user profile to get subscription dates
+    useEffect(() => {
+        const fetchProfile = async () => {
+            if (status === "authenticated" && session?.user?.id && session?.user?.role === "client" && session?.user?.plan) {
+                try {
+                    const profile = await getUserById(session.user.id);
+                    if (profile) setUserProfile(profile);
+                } catch (err) {
+                    console.error("Error fetching user profile for upgrade:", err);
+                }
+            }
+        };
+        fetchProfile();
+    }, [status, session?.user?.id, session?.user?.role, session?.user?.plan]);
 
+    // Calculate upgrade info for logged-in clients with active plans
+    const upgradeInfo = useMemo(() => {
+        if (!session?.user?.plan || !userProfile || !plans.length) return null;
 
+        // Find current plan in the plans list
+        const currentPlan = plans.find(p =>
+            p.name?.toLowerCase() === session.user.plan?.toLowerCase() ||
+            p.planId?.toLowerCase() === session.user.plan?.toLowerCase() ||
+            p._id === session.user.plan
+        );
+        if (!currentPlan) return null;
+
+        const currentPrice = parsePlanPrice(currentPlan.prices?.monthly);
+        const hasActiveSubscription = userProfile.subscriptionEnd && new Date(userProfile.subscriptionEnd) > new Date();
+
+        if (!hasActiveSubscription) return null;
+
+        const discountInfo = calculateUpgradeDiscount({
+            subscriptionStart: userProfile.subscriptionStart,
+            subscriptionEnd: userProfile.subscriptionEnd,
+            currentPlanPrice: currentPrice
+        });
+
+        return {
+            discountInfo,
+            currentPrice,
+            currentPlanId: currentPlan.planId || currentPlan._id,
+            currentPlanName: currentPlan.name
+        };
+    }, [session?.user?.plan, userProfile, plans]);
 
     return (
         <>
@@ -53,14 +102,22 @@ export default function PricingContent({ plans = [], faqs = [], services = [] })
                             className="w-full max-w-7xl mx-auto"
                         >
                             <CarouselContent className="-ml-4">
-                                {plans.map((plan, index) => (
-                                    <CarouselItem key={plan._id || index} className="pl-4 md:basis-1/2 lg:basis-1/3">
-                                        <PricingCard
-                                            plan={plan}
-                                            index={index}
-                                        />
-                                    </CarouselItem>
-                                ))}
+                                {plans.map((plan, index) => {
+                                    const thisPlanPrice = parsePlanPrice(plan.prices?.monthly);
+                                    const thisPlanId = plan.planId || plan._id || plan.id;
+                                    const isHigherPlan = upgradeInfo && thisPlanPrice > upgradeInfo.currentPrice && thisPlanId !== upgradeInfo.currentPlanId;
+                                    return (
+                                        <CarouselItem key={plan._id || index} className="pl-4 md:basis-1/2 lg:basis-1/3">
+                                            <PricingCard
+                                                plan={plan}
+                                                index={index}
+                                                upgradeMode={isHigherPlan}
+                                                upgradeDiscount={isHigherPlan ? upgradeInfo.discountInfo : null}
+                                                currentPlanId={upgradeInfo?.currentPlanId || null}
+                                            />
+                                        </CarouselItem>
+                                    );
+                                })}
                             </CarouselContent>
                             <div className="hidden md:flex justify-end gap-2 mt-8">
                                 <CarouselPrevious className="static translate-y-0" />
@@ -69,13 +126,21 @@ export default function PricingContent({ plans = [], faqs = [], services = [] })
                         </Carousel>
                     ) : (
                         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
-                            {plans.map((plan, index) => (
-                                <PricingCard
-                                    key={plan._id}
-                                    plan={plan}
-                                    index={index}
-                                />
-                            ))}
+                            {plans.map((plan, index) => {
+                                const thisPlanPrice = parsePlanPrice(plan.prices?.monthly);
+                                const thisPlanId = plan.planId || plan._id || plan.id;
+                                const isHigherPlan = upgradeInfo && thisPlanPrice > upgradeInfo.currentPrice && thisPlanId !== upgradeInfo.currentPlanId;
+                                return (
+                                    <PricingCard
+                                        key={plan._id}
+                                        plan={plan}
+                                        index={index}
+                                        upgradeMode={isHigherPlan}
+                                        upgradeDiscount={isHigherPlan ? upgradeInfo.discountInfo : null}
+                                        currentPlanId={upgradeInfo?.currentPlanId || null}
+                                    />
+                                );
+                            })}
                         </div>
                     )}
 
@@ -92,6 +157,7 @@ export default function PricingContent({ plans = [], faqs = [], services = [] })
                     </ScrollReveal>
                 </div>
             </section>
+
 
             {/* Feature Comparison */}
             {plans.length > 0 && (
@@ -258,3 +324,4 @@ export default function PricingContent({ plans = [], faqs = [], services = [] })
         </>
     );
 }
+

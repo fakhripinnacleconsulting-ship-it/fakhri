@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { CheckCircle2, Star, Plus, Minus, Calculator, Loader2, Package, Trash2, BadgeCheck, MessageSquare } from "lucide-react";
+import { CheckCircle2, Star, Plus, Minus, Calculator, Loader2, Package, Trash2, BadgeCheck, MessageSquare, ArrowUpCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getPricingPlans, getCatalogServices } from "@/lib/actions/content";
@@ -10,7 +10,7 @@ import { useCart } from "@/context/CartContext";
 import { toast } from "sonner";
 import { PricingCard } from "@/components/ui/PricingCard";
 import { useRouter } from "next/navigation";
-import { calculatePeriodDays } from "@/lib/utils";
+import { calculatePeriodDays, parsePlanPrice, calculateUpgradeDiscount } from "@/lib/utils";
 import Link from "next/link";
 
 const ClientPlanTab = ({ currentUser, managerPhone, managerName }) => {
@@ -66,6 +66,38 @@ const ClientPlanTab = ({ currentUser, managerPhone, managerName }) => {
             p._id === client.plan
         );
     }, [client, allPlans]);
+
+    // Calculate upgrade info: discount + higher-value plans
+    const upgradeInfo = useMemo(() => {
+        if (!client || !currentPlan || !allPlans.length) return null;
+
+        const currentPrice = parsePlanPrice(currentPlan.prices?.monthly);
+        const hasActiveSubscription = client.subscriptionEnd && new Date(client.subscriptionEnd) > new Date();
+
+        if (!hasActiveSubscription) return null;
+
+        // Calculate the 75% remaining value discount
+        const discountInfo = calculateUpgradeDiscount({
+            subscriptionStart: client.subscriptionStart,
+            subscriptionEnd: client.subscriptionEnd,
+            currentPlanPrice: currentPrice
+        });
+
+        // Filter plans that are higher in value than the current plan
+        const higherPlans = allPlans.filter(p => {
+            const planPrice = parsePlanPrice(p.prices?.monthly);
+            const planId = p.planId || p._id;
+            const currentPlanId = currentPlan.planId || currentPlan._id;
+            return planPrice > currentPrice && planId !== currentPlanId;
+        });
+
+        return {
+            discountInfo,
+            higherPlans,
+            currentPrice,
+            currentPlanId: currentPlan.planId || currentPlan._id
+        };
+    }, [client, currentPlan, allPlans]);
 
     // Get subscribed service IDs
     const subscribedServiceIds = useMemo(() => {
@@ -267,7 +299,7 @@ const ClientPlanTab = ({ currentUser, managerPhone, managerName }) => {
 
                 <div className="pt-4">
                     <div className="mb-6">
-                        <h2 className="font-heading text-xl font-bold mb-2">Choose Your Plan or <a href="/pricing" target="_blank" rel="noopener noreferrer" className="text-primary underline">See Pricing Details</a></h2>
+                        <h2 className="font-heading text-xl font-bold mb-2">Purchase a Plan or <a href="/pricing" target="_blank" rel="noopener noreferrer" className="text-primary underline">See Pricing Details</a></h2>
                         <p className="text-muted-foreground">You currently don't have an active main plan. Please select one to get full access.</p>
                     </div>
                     <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -423,16 +455,58 @@ const ClientPlanTab = ({ currentUser, managerPhone, managerName }) => {
                         </div>
                     </div>
 
-                    {/* If Expired, show other plans */}
+                    {/* If Expired, show Purchase Plan section */}
                     {isExpired && (
                         <div className="space-y-6 pt-6">
                             <div>
-                                <h2 className="font-heading text-xl font-bold mb-2">Choose Other Plan</h2>
-                                <p className="text-muted-foreground">Consider upgrading or switching to a different plan.</p>
+                                <h2 className="font-heading text-xl font-bold mb-2">Purchase Plan</h2>
+                                <p className="text-muted-foreground">Your plan has expired. Choose a new plan to continue enjoying our services.</p>
                             </div>
                             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {allPlans.map((plan, index) => (
                                     <PricingCard key={plan._id || index} plan={plan} index={index} />
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* If Active, show Upgrade Plan section (only higher-value plans with discount) */}
+                    {!isExpired && upgradeInfo && upgradeInfo.higherPlans.length > 0 && (
+                        <div className="space-y-6 pt-6">
+                            <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20 rounded-xl border border-green-200 dark:border-green-800 p-6">
+                                <div className="flex items-start gap-4">
+                                    <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-full">
+                                        <ArrowUpCircle className="h-6 w-6 text-green-600" />
+                                    </div>
+                                    <div className="flex-1">
+                                        <h2 className="font-heading text-xl font-bold mb-1">Upgrade Plan</h2>
+                                        <p className="text-muted-foreground text-sm">
+                                            Upgrade to a higher plan and get <span className="font-semibold text-green-600">75% of your remaining plan value</span> as a discount!
+                                        </p>
+                                        <div className="mt-3 flex flex-wrap gap-3 text-xs">
+                                            <span className="bg-white dark:bg-card px-3 py-1.5 rounded-full border border-green-200 dark:border-green-800 font-medium">
+                                                Remaining: {upgradeInfo.discountInfo.remainingDays} days
+                                            </span>
+                                            <span className="bg-white dark:bg-card px-3 py-1.5 rounded-full border border-green-200 dark:border-green-800 font-medium">
+                                                Remaining Value: ₹{upgradeInfo.discountInfo.remainingValue.toLocaleString('en-IN')}
+                                            </span>
+                                            <span className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-3 py-1.5 rounded-full font-semibold">
+                                                Upgrade Discount: ₹{upgradeInfo.discountInfo.discount.toLocaleString('en-IN')}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {upgradeInfo.higherPlans.map((plan, index) => (
+                                    <PricingCard
+                                        key={plan._id || index}
+                                        plan={plan}
+                                        index={index}
+                                        upgradeMode={true}
+                                        upgradeDiscount={upgradeInfo.discountInfo}
+                                        currentPlanId={upgradeInfo.currentPlanId}
+                                    />
                                 ))}
                             </div>
                         </div>

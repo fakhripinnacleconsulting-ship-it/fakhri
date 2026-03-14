@@ -11,7 +11,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { toast } from "sonner";
 import { formatINR, cn } from "@/lib/utils";
 
-export const PricingCard = ({ plan, index }) => {
+export const PricingCard = ({ plan, index, upgradeMode = false, upgradeDiscount = null, currentPlanId = null }) => {
     const { data: session } = useSession();
     const router = useRouter();
     const pathname = usePathname();
@@ -32,11 +32,32 @@ export const PricingCard = ({ plan, index }) => {
 
     const planId = plan.planId || plan._id || plan.id;
 
+    // Parse plan price for upgrade calculations
+    const planPriceStr = plan.prices?.monthly?.toString() || '0';
+    const planPriceNum = parseFloat(planPriceStr.replace(/[^0-9.]/g, '')) || 0;
+    const upgradeFinalPrice = upgradeDiscount ? Math.max(0, planPriceNum - upgradeDiscount.discount) : planPriceNum;
+
     const handlePurchase = (e) => {
         e.stopPropagation(); // Prevent card click event
-        const url = !session
-            ? `/login?role=client&callbackUrl=/checkout?plan=${planId}`
-            : `/checkout?plan=${planId}`;
+
+        let url;
+        if (upgradeMode && upgradeDiscount) {
+            // Upgrade flow: pass discount info to checkout
+            const params = new URLSearchParams({
+                plan: planId,
+                upgradeDiscount: upgradeDiscount.discount,
+                currentPlan: currentPlanId || '',
+                remainingDays: upgradeDiscount.remainingDays,
+                remainingValue: upgradeDiscount.remainingValue
+            });
+            url = !session
+                ? `/login?role=client&callbackUrl=/checkout?${params.toString()}`
+                : `/checkout?${params.toString()}`;
+        } else {
+            url = !session
+                ? `/login?role=client&callbackUrl=/checkout?plan=${planId}`
+                : `/checkout?plan=${planId}`;
+        }
 
         if (pathname.startsWith('/client') || pathname.startsWith('/admin') || pathname.startsWith('/super-admin')) {
             window.open(url, '_blank', 'noopener,noreferrer');
@@ -71,16 +92,36 @@ export const PricingCard = ({ plan, index }) => {
                     </div>
                 )}
 
+                {/* Upgrade Badge */}
+                {upgradeMode && upgradeDiscount && (
+                    <div className={`absolute top-0 left-0 text-xs font-semibold px-4 py-1.5 rounded-br-lg ${plan.highlighted ? 'bg-yellow-400 text-yellow-900' : 'bg-green-500 text-white'}`}>
+                        Upgrade & Save ₹{upgradeDiscount.discount.toLocaleString('en-IN')}
+                    </div>
+                )}
+
                 <div className="p-6">
                     {/* Header */}
                     <div className="mb-4">
                         <h3 className="heading-md mb-2">{plan.name}</h3>
-                        <div className="flex items-baseline gap-1">
-                            <span className="text-4xl font-poppins font-bold">
-                                {plan.prices.monthly?.toString().startsWith('₹') 
-                                    ? plan.prices.monthly 
-                                    : (plan.prices?.monthly ? `₹${formatINR(plan.prices.monthly)}` : '₹15,000')}
-                            </span>
+                        <div className="flex items-baseline gap-1 flex-wrap">
+                            {upgradeMode && upgradeDiscount ? (
+                                <>
+                                    <span className={`text-lg font-poppins line-through ${plan.highlighted ? 'text-primary-foreground/50' : 'text-muted-foreground'}`}>
+                                        {plan.prices.monthly?.toString().startsWith('₹')
+                                            ? plan.prices.monthly
+                                            : (plan.prices?.monthly ? `₹${formatINR(plan.prices.monthly)}` : '₹15,000')}
+                                    </span>
+                                    <span className="text-4xl font-poppins font-bold">
+                                        ₹{formatINR(upgradeFinalPrice)}
+                                    </span>
+                                </>
+                            ) : (
+                                <span className="text-4xl font-poppins font-bold">
+                                    {plan.prices.monthly?.toString().startsWith('₹')
+                                        ? plan.prices.monthly
+                                        : (plan.prices?.monthly ? `₹${formatINR(plan.prices.monthly)}` : '₹15,000')}
+                                </span>
+                            )}
                             {plan.period && (
                                 <span className={`text-sm ${plan.highlighted ? 'text-primary-foreground/70' : 'text-muted-foreground'
                                     }`}>
@@ -88,6 +129,11 @@ export const PricingCard = ({ plan, index }) => {
                                 </span>
                             )}
                         </div>
+                        {upgradeMode && upgradeDiscount && (
+                            <p className={`text-xs mt-1 ${plan.highlighted ? 'text-primary-foreground/60' : 'text-green-600'}`}>
+                                75% of your remaining plan value (₹{upgradeDiscount.remainingValue.toLocaleString('en-IN')}) applied as discount
+                            </p>
+                        )}
                     </div>
 
                     {/* Features */}
@@ -124,12 +170,29 @@ export const PricingCard = ({ plan, index }) => {
                     )}
 
                     {/* CTA */}
-                    {session?.user?.plan ? (
-                        <div className={`w-full py-4 rounded-lg font-poppins font-semibold text-center border-2 ${session.user.plan === planId
-                            ? (plan.highlighted ? 'bg-transparent text-primary-foreground border-primary-foreground/30' : 'bg-green-50 text-green-600 border-green-200')
-                            : 'bg-muted text-muted-foreground border-border opacity-60'
+                    {upgradeMode ? (
+                        <motion.button
+                            suppressHydrationWarning
+                            className={`w-full py-4 rounded-lg font-poppins font-semibold transition-all duration-300 ${plan.highlighted
+                                ? 'bg-background text-primary hover:bg-background/90'
+                                : 'bg-primary text-primary-foreground hover:shadow-red'
+                                }`}
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            onClick={handlePurchase}
+                        >
+                            Upgrade Plan
+                        </motion.button>
+                    ) : session?.user?.plan && (
+                        session.user.plan === planId ||
+                        session.user.plan?.toLowerCase() === plan.name?.toLowerCase() ||
+                        session.user.plan?.toLowerCase() === plan.planId?.toLowerCase()
+                    ) ? (
+                        <div className={`w-full py-4 rounded-lg font-poppins font-semibold text-center border-2 ${plan.highlighted
+                            ? 'bg-transparent text-primary-foreground border-primary-foreground/30'
+                            : 'bg-green-50 text-green-600 border-green-200'
                             }`}>
-                            Already Purchased
+                            Current Plan
                         </div>
                     ) : (
                         <motion.button
