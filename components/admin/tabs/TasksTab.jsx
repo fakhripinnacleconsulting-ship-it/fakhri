@@ -80,12 +80,11 @@ const AdminTasksTab = ({ currentUser }) => {
                     ]
                 };
 
-            // Projection for performance: Fetch only visible/needed fields for the list
             const projection = {
                 title: 1, category: 1, isHighPriority: 1,
                 client: 1, clientId: 1, assignee: 1, owner: 1,
                 priority: 1, status: 1, dueDate: 1, createdAt: 1,
-                updatedAt: 1, planForWeek: 1
+                updatedAt: 1, planForWeek: 1, description: 1, attachment: 1, taskId: 1
             };
 
             const t = await getTasks(taskFilter, projection);
@@ -321,7 +320,7 @@ const AdminTasksTab = ({ currentUser }) => {
                     name: newTask.owner,
                     id: newTask.ownerId || currentUser._id
                 },
-                owner: newTask.owner,
+                owner: currentUser.name,
                 dueDate: newTask.dueDate,
                 planForWeek: newTask.planForWeek,
                 ...(attachmentData && { attachment: attachmentData }),
@@ -380,7 +379,7 @@ const AdminTasksTab = ({ currentUser }) => {
                 },
                 clientId: selectedClient?.id,
                 assignee: {
-                    name: showEditTask.owner,
+                    name: showEditTask.assignee?.name || showEditTask.owner,
                     id: showEditTask.assignee?.id || showEditTask.ownerId || currentUser._id
                 },
                 owner: showEditTask.owner,
@@ -595,7 +594,7 @@ const AdminTasksTab = ({ currentUser }) => {
                             <h3 className="font-heading font-semibold text-lg">Task Information</h3>
                             <div className="flex items-center gap-4">
                                 <div className="flex items-center gap-2">
-                                    <span className="text-sm text-muted-foreground mr-1">Owner:</span>
+                                    <span className="text-sm text-muted-foreground mr-1">Assigned To:</span>
                                     <Select
                                         value={newTask.ownerId}
                                         onValueChange={(id) => {
@@ -774,7 +773,7 @@ const AdminTasksTab = ({ currentUser }) => {
                                 </TableHead>
                                 <TableHead className="sticky top-0 z-20 bg-card/95 backdrop-blur-sm font-bold uppercase text-[11px] tracking-wider border-b">
                                     <button onClick={() => handleSort('owner')} className="flex items-center hover:text-primary transition-colors">
-                                        Owner {getSortIcon('owner')}
+                                        Assigned To {getSortIcon('owner')}
                                     </button>
                                 </TableHead>
                                 <TableHead className="sticky top-0 z-20 bg-card/95 backdrop-blur-sm font-bold uppercase text-[11px] tracking-wider border-b">
@@ -846,10 +845,10 @@ const AdminTasksTab = ({ currentUser }) => {
                                         <TableCell>
                                             <div className="flex items-center gap-2">
                                                 <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-bold text-primary">
-                                                    {getInitials(task.assignee?.name || task.owner)}
+                                                    {getInitials(task.assignee?.name || "Unassigned")}
                                                 </div>
                                                 <span className="text-sm text-muted-foreground capitalize">
-                                                    {typeof task.owner === 'string' ? task.owner : (task.assignee?.name || "Unassigned")}
+                                                    {task.assignee?.name || "Unassigned"}
                                                 </span>
                                             </div>
                                         </TableCell>
@@ -1032,7 +1031,7 @@ const AdminTasksTab = ({ currentUser }) => {
                                 <h3 className="font-heading font-semibold text-lg">Edit Task</h3>
                                 <div className="flex items-center gap-4">
                                     <div className="flex items-center gap-2">
-                                        <span className="text-sm text-muted-foreground mr-1">Owner:</span>
+                                        <span className="text-sm text-muted-foreground mr-1">Assigned To:</span>
                                         <Select
                                             value={showEditTask.assignee?.id || showEditTask.ownerId || ""}
                                             onValueChange={(id) => {

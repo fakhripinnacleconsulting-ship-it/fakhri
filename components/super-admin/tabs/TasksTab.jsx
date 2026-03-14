@@ -42,7 +42,7 @@ import * as XLSX from "xlsx";
 
 
 
-const SuperAdminTasksTab = () => {
+const SuperAdminTasksTab = ({ currentUser }) => {
     const [tasks, setTasks] = useState([]);
     const [clients, setClients] = useState([]);
     const [managers, setManagers] = useState([]);
@@ -407,7 +407,7 @@ const SuperAdminTasksTab = () => {
                     name: newTask.owner,
                     id: newTask.ownerId
                 },
-                owner: newTask.owner,
+                owner: currentUser?.name || "Super Admin",
                 dueDate: newTask.dueDate,
                 planForWeek: newTask.planForWeek,
                 ...(attachmentData && { attachment: attachmentData }),
@@ -466,7 +466,7 @@ const SuperAdminTasksTab = () => {
                 },
                 clientId: selectedClient?.id,
                 assignee: {
-                    name: showEditTask.owner,
+                    name: showEditTask.assignee?.name || showEditTask.owner,
                     id: showEditTask.ownerId || showEditTask.assignee?.id
                 },
                 owner: showEditTask.owner,
@@ -679,8 +679,8 @@ const SuperAdminTasksTab = () => {
                         name: client.name,
                         company: client.company
                     },
-                    owner: manager ? manager.name : (task.ownerName || "Unassigned"),
-                    assignee: manager ? { name: manager.name, id: manager.id } : null,
+                    owner: currentUser?.name || "Super Admin",
+                    assignee: manager ? { name: manager.name, id: manager.id } : { name: task.ownerName || "Unassigned", id: null },
                     ownerId: manager ? manager.id : null
                 };
 
@@ -1162,9 +1162,9 @@ const SuperAdminTasksTab = () => {
                                         <TableCell>
                                             <div className="flex items-center gap-2">
                                                 <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-bold text-primary">
-                                                    {getInitials(task.assignee?.name || task.owner)}
+                                                    {getInitials(task.assignee?.name || "Unassigned")}
                                                 </div>
-                                                <span className="text-sm text-muted-foreground capitalize">{task.assignee?.name || task.owner || "Unassigned"}</span>
+                                                <span className="text-sm text-muted-foreground capitalize">{task.assignee?.name || "Unassigned"}</span>
                                             </div>
                                         </TableCell>
                                         <TableCell>

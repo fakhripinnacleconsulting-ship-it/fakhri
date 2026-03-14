@@ -41,19 +41,19 @@ const TaskDetailsDialog = ({ open, onOpenChange, task }) => {
         }
     };
 
-    const handleCopy = () => {
-        const stripHtml = (html) => {
-            return (html || '')
-                .replace(/<[^>]*>?/gm, '') // Strip tags
-                .replace(/&nbsp;/g, ' ')
-                .replace(/&amp;/g, '&')
-                .replace(/&lt;/g, '<')
-                .replace(/&gt;/g, '>')
-                .replace(/&quot;/g, '"')
-                .replace(/&#39;/g, "'")
-                .trim();
-        };
+    const stripHtml = (html) => {
+        return (html || '')
+            .replace(/<[^>]*>?/gm, '') // Strip tags
+            .replace(/&nbsp;/g, ' ')
+            .replace(/&amp;/g, '&')
+            .replace(/&lt;/g, '<')
+            .replace(/&gt;/g, '>')
+            .replace(/&quot;/g, '"')
+            .replace(/&#39;/g, "'")
+            .trim();
+    };
 
+    const handleCopy = () => {
         const details = `Task: ${task.title || 'N/A'}
 Status: ${task.status || 'N/A'}
 Priority: ${task.priority || 'Normal'}
@@ -100,7 +100,7 @@ ${stripHtml(task.description) || 'No description provided.'}`;
                         <div className="space-y-2">
                             <h4 className="text-sm font-semibold text-foreground/80">Description</h4>
                             <div className="text-sm text-muted-foreground whitespace-pre-wrap bg-muted/30 p-3 rounded-md border min-h-[60px]">
-                                {task.description || "No description provided."}
+                                {stripHtml(task.description) || "No description provided."}
                             </div>
                         </div>
 

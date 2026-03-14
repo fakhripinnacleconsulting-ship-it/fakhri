@@ -47,7 +47,7 @@ export default function SuperAdminTabPage({ params }) {
     if (tabName === "clients") return <SuperAdminClientsTab />;
     if (tabName === "teams") return <SuperAdminTeamsTab />;
     if (tabName === "admins") return <SuperAdminAdminsTab />;
-    if (tabName === "tasks") return <SuperAdminTasksTab />;
+    if (tabName === "tasks") return <SuperAdminTasksTab currentUser={currentUser} />;
     if (tabName === "files") return <SuperAdminFilesTab currentUser={currentUser} />;
     if (tabName === "website") return <SuperAdminWebsiteTab />;
     if (tabName === "coupons") return <SuperAdminCouponsTab />;

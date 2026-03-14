@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 
 export default function PriceCalculatorTab() {
     const [loading, setLoading] = useState(true);
-    const iframeUrl = "https://sellercentral.amazon.in/ap/signin?clientContext=258-4736134-1745033&openid.pape.max_auth_age=0&openid.return_to=https%3A%2F%2Fsellercentral.amazon.in%2Frevcal&openid.identity=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&openid.assoc_handle=sc_in_amazon_v2&openid.mode=checkid_setup&language=en_IN&openid.claimed_id=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0%2Fidentifier_select&pageId=sc_amazon_v3_unified&openid.ns=http%3A%2F%2Fspecs.openid.net%2Fauth%2F2.0&ssoResponse=eyJ6aXAiOiJERUYiLCJlbmMiOiJBMjU2R0NNIiwiYWxnIjoiQTI1NktXIn0.U1mEZbEa4Ih6akVnTdXQlsDqlB_oq-eYB8TeJ4MpVQUyzf6tkEmkLA.nDF-jK7LD4IsgPX3.q94z7GcTQLL0RddW8fCVGuPU0bTB3sgJ38SI0PWSIFmKuYoDglOxAknG5C-DWNl7P3otY80xjiz5Ld6u8J9aHw74nSsqxCWqUgy0HW6DkuRrnmFMUnaggRUYEhwNssd_n_EhkW7VIUDzBZ1ym0-nVfOS_kII4A19ULPtyUx4hv4gTHBsAopjQlbMKoT0uf8ke586ZMa7nQ.szTNIGD3g4ftzts_rP7z9Q";
+    const iframeUrl = "https://www.youtube.com/embed/LJO6ImIcJmU";
 
     const handleRefresh = () => {
         setLoading(true);
