@@ -12,17 +12,6 @@ export default function LegalPageContent({ page }) {
 
     return (
         <div className="min-h-screen pb-20">
-            {/* Simple Breadcrumb */}
-            <div className="bg-secondary/30 py-4 border-b">
-                <div className="container-custom">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Link href="/" className="hover:text-primary transition-colors">Home</Link>
-                        <ChevronRight className="h-4 w-4" />
-                        <span className="text-foreground font-medium">{page.title}</span>
-                    </div>
-                </div>
-            </div>
-
             {/* Title Section */}
             <section className="py-16 md:py-24 bg-gradient-to-b from-secondary/50 to-background overflow-hidden relative">
                 <div className="container-custom relative z-10">
