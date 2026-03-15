@@ -100,7 +100,7 @@ import {
     getTeamMembers, upsertTeamMember, deleteTeamMember,
     getPricingPlans, upsertPricingPlan, deletePricingPlan,
     getPricingFeatures, upsertPricingFeature, deletePricingFeature,
-    getMilestones,
+    getMilestones, upsertMilestone, deleteMilestone,
     getServices, upsertService, deleteService,
     getCatalogServices, upsertCatalogService, deleteCatalogService,
     getTestimonials, upsertTestimonial, deleteTestimonial,
@@ -125,6 +125,7 @@ export default function WebsiteTab() {
     const [testimonials, setTestimonials] = useState([]);
     const [faqs, setFaqs] = useState([]);
     const [jobs, setJobs] = useState([]);
+    const [milestones, setMilestones] = useState([]);
     const [posts, setPosts] = useState([]);
 
     const loadAllData = useCallback(async (silent = false) => {
@@ -140,6 +141,7 @@ export default function WebsiteTab() {
                 testimonialData,
                 faqsData,
                 jobsData,
+                milestonesData,
                 blogData
             ] = await Promise.all([
                 getCompanyData(),
@@ -151,6 +153,7 @@ export default function WebsiteTab() {
                 getTestimonials(),
                 getFAQs(),
                 getJobs(),
+                getMilestones(),
                 getBlogPosts()
             ]);
 
@@ -178,6 +181,7 @@ export default function WebsiteTab() {
             setFaqs(processedFaqs);
 
             setJobs(jobsData || []);
+            setMilestones(milestonesData || []);
             setPosts(blogData?.posts || []);
 
         } catch (error) {
@@ -244,6 +248,10 @@ export default function WebsiteTab() {
                     const roles = await getJobs();
                     setJobs(roles);
                     break;
+                case "Milestones":
+                    const ms = await getMilestones();
+                    setMilestones(ms);
+                    break;
                 case "Legal":
                     // Handled within LegalManager but if needed we can refresh here
                     break;
@@ -269,6 +277,7 @@ export default function WebsiteTab() {
         { id: "Testimonials", label: "Client Love", icon: MessageSquare, description: "Display social proof and client success stories." },
         { id: "FAQs", label: "Knowledge Base", icon: HelpCircle, description: "Provide answers to commonly asked customer questions." },
         { id: "Jobs", label: "Open Positions", icon: Shield, description: "Manage company vacancies and career opportunities." },
+        { id: "Milestones", label: "Milestones", icon: ChevronRight, description: "Track and showcase key company achievements over time." },
         { id: "Legal", label: "Legal Center", icon: Shield, description: "Manage terms of service, privacy policy and legal pages." },
     ], []);
 
@@ -335,6 +344,7 @@ export default function WebsiteTab() {
                 {activeCategory === "Services" && <ServiceManager data={services} onUpdate={setServices} refreshData={refreshCategoryData} />}
                 {activeCategory === "Catalog" && <CatalogManager data={catalog} onUpdate={setCatalog} refreshData={refreshCategoryData} />}
                 {activeCategory === "Blogs" && <BlogManager data={posts} onUpdate={setPosts} refreshData={refreshCategoryData} />}
+                {activeCategory === "Milestones" && <MilestoneManager data={milestones} onUpdate={setMilestones} refreshData={refreshCategoryData} />}
                 {activeCategory === "Testimonials" && <TestimonialManager data={testimonials} onUpdate={setTestimonials} refreshData={refreshCategoryData} />}
                 {activeCategory === "FAQs" && <FAQManager data={faqs} onUpdate={setFaqs} refreshData={refreshCategoryData} />}
                 {activeCategory === "Jobs" && <JobManager data={jobs} onUpdate={setJobs} refreshData={refreshCategoryData} />}
@@ -1887,6 +1897,228 @@ const quillModules = {
         ['clean']
     ]
 };
+
+// Milestone Manager
+function MilestoneManager({ data, onUpdate, refreshData }) {
+    const [milestones, setMilestones] = useState(Array.isArray(data) ? data : []);
+
+    useEffect(() => {
+        if (Array.isArray(data)) setMilestones(data);
+    }, [data]);
+
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [currentMilestone, setCurrentMilestone] = useState(null);
+    const [isViewMode, setIsViewMode] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    const [searchQuery, setSearchQuery] = useState("");
+
+    const handleDelete = async (id) => {
+        if (confirm("Delete milestone?")) {
+            setIsLoading(true);
+            try {
+                const res = await deleteMilestone(id);
+                if (res.success) {
+                    const updated = milestones.filter(m => m._id !== id && m.id !== id);
+                    setMilestones(updated);
+                    onUpdate(updated);
+                    toast.success("Deleted");
+                } else {
+                    toast.error("Failed to delete");
+                }
+            } catch (error) {
+                toast.error("Error deleting milestone");
+            } finally {
+                setIsLoading(false);
+            }
+        }
+    };
+
+    const handleSave = async (e) => {
+        e.preventDefault();
+        setIsLoading(true);
+        const formData = new FormData(e.target);
+
+        const newMilestone = {
+            id: currentMilestone ? (currentMilestone._id || currentMilestone.id) : undefined,
+            year: formData.get("year"),
+            title: formData.get("title"),
+            description: formData.get("description"),
+            image: formData.get("image"),
+            order: Number(formData.get("order")) || 0
+        };
+
+        try {
+            const saved = await upsertMilestone(newMilestone);
+            if (saved) {
+                const updated = milestones.some(m => m._id === saved._id || m.id === saved.id)
+                    ? milestones.map(m => (m._id === saved._id || m.id === saved.id) ? saved : m)
+                    : [...milestones, saved];
+
+                const sorted = updated.sort((a, b) => (a.order || 0) - (b.order || 0));
+                setMilestones(sorted);
+                onUpdate(sorted);
+                toast.success(currentMilestone ? "Updated" : "Added");
+                setIsDialogOpen(false);
+                if (refreshData) refreshData(true);
+            } else {
+                toast.error("Failed to save milestone");
+            }
+        } catch (error) {
+            console.error(error);
+            toast.error("An error occurred");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const sortedMilestones = useMemo(() => {
+        return [...milestones].filter(m =>
+            m.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            m.year?.toLowerCase().includes(searchQuery.toLowerCase())
+        ).sort((a, b) => (a.order || 0) - (b.order || 0));
+    }, [milestones, searchQuery]);
+
+    return (
+        <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-muted/30 p-4 rounded-xl border border-dashed text-sm">
+                <div className="relative w-full md:max-w-md">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                        placeholder="Search milestones..."
+                        className="pl-10 h-10"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                </div>
+                <div className="flex gap-2">
+                    <Button variant="outline" size="sm" onClick={() => refreshData()} title="Refresh Data">
+                        <RefreshCw className="w-4 h-4 mr-2" />
+                        Refresh
+                    </Button>
+                    <Button onClick={() => { setCurrentMilestone(null); setIsViewMode(false); setIsDialogOpen(true); }}>
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add Milestone
+                    </Button>
+                </div>
+            </div>
+
+            <div className="rounded-md border bg-card overflow-hidden">
+                <ScrollableContainer maxHeight="60vh">
+                    <Table>
+                        <TableHeader className="bg-muted/30">
+                            <TableRow>
+                                <TableHead className="w-20">Order</TableHead>
+                                <TableHead className="w-24">Year</TableHead>
+                                <TableHead>Title</TableHead>
+                                <TableHead className="text-right">Actions</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {sortedMilestones.length === 0 && (
+                                <TableRow>
+                                    <TableCell colSpan={4} className="text-center py-8 text-muted-foreground italic">No milestones found.</TableCell>
+                                </TableRow>
+                            )}
+                            {sortedMilestones.map((m) => (
+                                <TableRow key={m._id || m.id} className="group hover:bg-muted/20 transition-colors">
+                                    <TableCell className="font-mono text-xs text-muted-foreground">#{m.order}</TableCell>
+                                    <TableCell className="font-bold text-primary">{m.year}</TableCell>
+                                    <TableCell className="font-semibold capitalize">{m.title}</TableCell>
+                                    <TableCell className="text-right">
+                                        <div className="flex justify-end gap-1">
+                                            <Button variant="ghost" size="icon" onClick={() => { setCurrentMilestone(m); setIsViewMode(true); setIsDialogOpen(true); }}><Eye className="w-4 h-4" /></Button>
+                                            <Button variant="ghost" size="icon" onClick={() => { setCurrentMilestone(m); setIsViewMode(false); setIsDialogOpen(true); }}><Edit className="w-4 h-4" /></Button>
+                                            <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10" onClick={() => handleDelete(m._id || m.id)}><Trash2 className="w-4 h-4" /></Button>
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </ScrollableContainer>
+            </div>
+
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogContent className="max-w-2xl bg-card border-none shadow-2xl p-0 overflow-hidden">
+                    <DialogHeader className="p-8 pb-4 bg-muted/30 border-b">
+                        <DialogTitle className="text-xl font-bold tracking-tight">
+                            {isViewMode ? "Milestone Details" : currentMilestone ? "Edit Achievement" : "Add New Milestone"}
+                        </DialogTitle>
+                        <DialogDescription className="font-medium">Track your company's journey and key successes.</DialogDescription>
+                    </DialogHeader>
+
+                    <ScrollableContainer className="max-h-[70vh] p-8 pt-6">
+                        {isViewMode ? (
+                            <div className="space-y-6 animate-in fade-in zoom-in-95 duration-300">
+                                <div className="aspect-video relative rounded-2xl overflow-hidden bg-muted border shadow-inner">
+                                    {currentMilestone?.image ? (
+                                        <img src={currentMilestone.image} alt={currentMilestone.title} className="object-cover w-full h-full" />
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center text-muted-foreground/30">
+                                            <Building className="w-12 h-12" />
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="grid grid-cols-2 gap-6 p-4 bg-muted/20 rounded-xl border border-dashed">
+                                    <div><Label className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">Target Year</Label><p className="font-black text-2xl text-primary">{currentMilestone?.year}</p></div>
+                                    <div><Label className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">Display Priority</Label><p className="font-mono text-xl">#{currentMilestone?.order}</p></div>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">Headline</Label>
+                                    <h3 className="text-2xl font-bold tracking-tight capitalize text-foreground">{currentMilestone?.title}</h3>
+                                </div>
+                                <div className="space-y-2 border-l-2 border-primary/20 pl-4">
+                                    <Label className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">Context & Story</Label>
+                                    <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">{currentMilestone?.description || "No description provided."}</p>
+                                </div>
+                            </div>
+                        ) : (
+                            <form onSubmit={handleSave} id="milestone-form" className="space-y-8 py-2">
+                                <div className="grid md:grid-cols-2 gap-6">
+                                    <div className="space-y-2">
+                                        <Label className="text-xs uppercase font-bold tracking-widest text-muted-foreground">Milestone Year <span className="text-primary">*</span></Label>
+                                        <Input name="year" defaultValue={currentMilestone?.year} required placeholder="e.g. 2024" className="h-12 bg-muted/20 border-none font-bold text-lg focus:ring-2 focus:ring-primary/20" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label className="text-xs uppercase font-bold tracking-widest text-muted-foreground">Display Order</Label>
+                                        <Input type="number" name="order" defaultValue={currentMilestone?.order || 0} className="h-12 bg-muted/20 border-none font-mono focus:ring-2 focus:ring-primary/20" />
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label className="text-xs uppercase font-bold tracking-widest text-muted-foreground">Achievement Headline <span className="text-primary">*</span></Label>
+                                    <Input name="title" defaultValue={currentMilestone?.title} required placeholder="e.g. Global Expansion Commenced" className="h-12 bg-muted/20 border-none font-bold focus:ring-2 focus:ring-primary/20" />
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label className="text-xs uppercase font-bold tracking-widest text-muted-foreground">Story / Description</Label>
+                                    <Textarea name="description" defaultValue={currentMilestone?.description} rows={4} placeholder="Briefly describe the significance of this milestone..." className="bg-muted/20 border-none resize-none focus:ring-2 focus:ring-primary/20" />
+                                </div>
+
+                                <div className="space-y-3">
+                                    <Label className="text-xs uppercase font-bold tracking-widest text-muted-foreground">Visual Asset</Label>
+                                    <ImagePicker name="image" label="Milestone Image" value={currentMilestone?.image} className="bg-muted/20 border-none" />
+                                </div>
+                            </form>
+                        )}
+                    </ScrollableContainer>
+
+                    <DialogFooter className="p-8 border-t bg-background">
+                        <div className="flex justify-between items-center w-full">
+                            <Button type="button" variant="ghost" onClick={() => setIsDialogOpen(false)} className="font-bold text-xs uppercase tracking-widest">Discard Changes</Button>
+                            {!isViewMode && (
+                                <Button type="submit" form="milestone-form" disabled={isLoading} className="bg-primary hover:bg-primary/90 font-bold px-8 shadow-lg shadow-primary/20 transition-all active:scale-95 h-11">
+                                    {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                                    Sync Milestone
+                                </Button>
+                            )}
+                        </div>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+        </div>
+    );
+}
 
 // 5. Blog Manager
 function BlogManager({ data, onUpdate, refreshData }) {

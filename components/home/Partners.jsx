@@ -9,54 +9,45 @@ const Partners = ({ company }) => {
 
     const partners = company.partners;
     // Duplicating for infinite effect
-    const duplicatedPartners = [...partners, ...partners, ...partners, ...partners];
+    const duplicatedPartners = [...partners, ...partners, ...partners, ...partners, ...partners, ...partners, ...partners, ...partners, ...partners, ...partners, ...partners, ...partners];
 
     return (
-        <section className="py-20 overflow-hidden bg-background relative border-y border-border/50">
+        <section className=" overflow-hidden bg-background relative border-y border-border/50">
             {/* Background elements */}
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-primary/5 via-transparent to-transparent pointer-events-none" />
-
-            <div className="container-custom mb-12 text-center relative z-10">
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.6 }}
-                >
-                    <span className="text-primary font-bold tracking-[0.2em] text-[10px] md:text-xs uppercase mb-3 block">Global Network</span>
-                    <h3 className="text-2xl md:text-3xl font-poppins font-bold bg-gradient-to-r from-foreground via-foreground/80 to-foreground bg-clip-text text-transparent italic">
-                        Trusted by <span className="text-primary not-italic">500+</span> Leading Brands
-                    </h3>
-                    <div className="w-20 h-1 bg-primary/20 mx-auto mt-4 rounded-full" />
-                </motion.div>
-            </div>
 
             <div className="relative flex overflow-hidden w-full py-8">
                 {/* Fade Overlays */}
                 <div className="absolute left-0 top-0 bottom-0 w-32 md:w-64 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none" />
                 <div className="absolute right-0 top-0 bottom-0 w-32 md:w-64 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none" />
 
-                <div className="flex w-max animate-marquee-smooth hover:pause whitespace-nowrap gap-12 md:gap-24 items-center">
+                <div className="flex w-max animate-marquee-smooth hover:pause whitespace-nowrap gap-8 md:gap-16 items-center px-4">
                     {duplicatedPartners.map((partner, i) => (
                         <div
                             key={`${partner.name}-${i}`}
-                            className="flex flex-col items-center justify-center min-w-[140px] md:min-w-[180px] group transition-all duration-500"
+                            className="flex flex-col items-center justify-center min-w-[160px] md:min-w-[220px] group transition-all duration-500 p-6 rounded-3xl hover:bg-white dark:hover:bg-muted/30 border border-transparent hover:border-primary/5 hover:shadow-2xl hover:shadow-primary/5"
                         >
-                            {partner.logo ? (
-                                <div className="relative h-10 md:h-14 w-36 md:w-44 filter grayscale opacity-40 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-500 hover:scale-110">
+                            <div className="relative h-12 w-20   transition-all duration-500 scale-110 mb-5">
+                                {partner.logo ? (
                                     <Image
                                         src={partner.logo}
                                         alt={`${partner.name} logo`}
                                         fill
-                                        className="object-contain"
-                                        sizes="(max-width: 768px) 140px, 200px"
+                                        className="object-contain filter grayscale opacity-40 grayscale-0 opacity-100 transition-all duration-500"
+                                        sizes="(max-width: 768px) 160px, 240px"
                                     />
-                                </div>
-                            ) : (
-                                <span className="text-xl md:text-3xl font-poppins font-black text-foreground/30 group-hover:text-primary group-hover:scale-110 transition-all duration-500 cursor-default select-none tracking-tighter">
+                                ) : (
+                                    <div className="w-full h-full flex items-center justify-center bg-primary/5 rounded-2xl border-2 border-dashed border-primary/20">
+                                        <span className="text-xs font-black text-primary/30 uppercase tracking-tighter">No Logo</span>
+                                    </div>
+                                )}
+                            </div>
+                            <div className="relative overflow-hidden pt-1">
+                                <span className="block text-[10px] md:text-[11px] font-black uppercase tracking-[0.25em] text-muted-foreground/50 text-primary transition-all duration-500 transform translate-y-0 :-translate-y-1">
                                     {partner.name}
                                 </span>
-                            )}
+                                {/* <div className="absolute bottom-0 left-0 w-full h-[1.5px] bg-primary scale-x-0 scale-x-100 transition-transform duration-500 origin-center" /> */}
+                            </div>
                         </div>
                     ))}
                 </div>

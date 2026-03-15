@@ -79,8 +79,8 @@ export default async function Home() {
         />
       )}
       <Hero company={company} />
-      <Partners company={company} />
       <TrustBadges company={company} />
+      <Partners company={company} />
       <ServicesPreview services={services} />
       <WhyChooseUs company={company} />
       <CTA />
