@@ -1,10 +1,12 @@
 import { getJobs } from '@/lib/actions/content';
 import CareerContent from '@/components/career/CareerContent';
 
+import { SEO_CONFIG } from '@/lib/seo-config';
+
 export const metadata = {
-    title: "Careers | Fakhri IT Services - Join Our Amazon Agency Team",
-    description: "Build your career with Fakhri IT Services. Explore current job openings for account managers, PPC specialists, content creators, and more.",
-    keywords: "Amazon agency jobs, e-commerce careers, work at Fakhri IT Services",
+    title: SEO_CONFIG.career.title,
+    description: SEO_CONFIG.career.description,
+    keywords: SEO_CONFIG.career.keywords,
 };
 
 export default async function CareerPage() {

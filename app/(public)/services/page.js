@@ -6,13 +6,15 @@ import { getServices } from '@/lib/actions/content';
 import { ContactDialog } from '@/components/dialogs/ContactDialog';
 
 
+import { SEO_CONFIG } from '@/lib/seo-config';
+
 export const metadata = {
-    title: "Our Services | Fakhri IT Services - Amazon Seller Solutions",
-    description: "Comprehensive Amazon seller services including account setup, product listing optimization, FBA operations, advertising management, and strategic growth consulting.",
-    keywords: ["Amazon services", "product listing", "FBA operations", "Amazon advertising", "A+ content", "account management"],
+    title: SEO_CONFIG.services.title,
+    description: SEO_CONFIG.services.description,
+    keywords: SEO_CONFIG.services.keywords,
     openGraph: {
-        title: "Our Services | Fakhri IT Services",
-        description: "Expert Amazon seller solutions to grow your business.",
+        title: SEO_CONFIG.services.title,
+        description: SEO_CONFIG.services.description,
         url: 'https://fakhriitservices.com/services',
         siteName: 'Fakhri IT Services',
         locale: 'en_US',
@@ -20,8 +22,8 @@ export const metadata = {
     },
     twitter: {
         card: 'summary_large_image',
-        title: "Our Services | Fakhri IT Services",
-        description: "Expert Amazon seller solutions to grow your business.",
+        title: SEO_CONFIG.services.title,
+        description: SEO_CONFIG.services.description,
     }
 };
 

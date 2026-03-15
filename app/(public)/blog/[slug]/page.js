@@ -6,19 +6,49 @@ import { Calendar, Clock, ArrowLeft, Tag } from 'lucide-react';
 import { ScrollReveal } from '@/components/animations/ScrollReveal';
 import ShareButtons from '@/components/blog/ShareButtons';
 
+import { SEO_CONFIG, BASE_KEYWORDS } from '@/lib/seo-config';
+
 export async function generateMetadata({ params }) {
     const { slug } = await params;
     const post = await getBlogPostBySlug(slug);
 
     if (!post) {
         return {
-            title: 'Post Not Found',
+            title: 'Post Not Found | Fakhri IT Services',
         };
     }
 
+    const postKeywords = post.tags ? [...post.tags, ...BASE_KEYWORDS] : BASE_KEYWORDS;
+
     return {
-        title: `${post.title} | Fakhri IT Services`,
+        title: `${post.title} | Fakhri IT Blog`,
         description: post.excerpt,
+        keywords: postKeywords,
+        openGraph: {
+            title: post.title,
+            description: post.excerpt,
+            url: `https://fakhriitservices.com/blog/${post.slug}`,
+            siteName: 'Fakhri IT Services',
+            images: [
+                {
+                    url: post.thumbnail || 'https://fakhriitservices.com/og-image.png',
+                    width: 1200,
+                    height: 630,
+                    alt: post.title,
+                },
+            ],
+            locale: 'en_US',
+            type: 'article',
+            publishedTime: post.publishDate,
+            authors: [post.author.name],
+            tags: post.tags,
+        },
+        twitter: {
+            card: 'summary_large_image',
+            title: post.title,
+            description: post.excerpt,
+            images: [post.thumbnail || 'https://fakhriitservices.com/twitter-image.png'],
+        }
     };
 }
 

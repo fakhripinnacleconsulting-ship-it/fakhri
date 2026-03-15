@@ -11,22 +11,33 @@ const FaQ = dynamic(() => import('@/components/home/FaQ'), { ssr: true });
 import { getServices, getTestimonials, getFAQs, getCompanyData } from '@/lib/actions/content';
 
 
+import { SEO_CONFIG } from '@/lib/seo-config';
+
 export const metadata = {
-  title: "Fakhri IT Services | No.1 Amazon Seller Services Partner",
-  description: "Your trusted Amazon seller services partner since 2016. Expert account management, FBA operations, PPC advertising, and growth strategies for Amazon sellers.",
-  keywords: ["Amazon seller services", "Amazon account management", "FBA services", "Amazon PPC", "Amazon consulting", "e-commerce agency"],
+  title: SEO_CONFIG.home.title,
+  description: SEO_CONFIG.home.description,
+  keywords: SEO_CONFIG.home.keywords,
   openGraph: {
-    title: "Fakhri IT Services | No.1 Amazon Seller Services Partner",
-    description: "Your trusted Amazon seller services partner since 2016.",
+    title: SEO_CONFIG.home.title,
+    description: SEO_CONFIG.home.description,
     url: 'https://fakhriitservices.com',
     siteName: 'Fakhri IT Services',
     locale: 'en_US',
     type: 'website',
+    images: [
+      {
+        url: 'https://fakhriitservices.com/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'Fakhri IT Services - #1 Amazon Partner',
+      },
+    ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: "Fakhri IT Services | No.1 Amazon Seller Services Partner",
-    description: "Expert Amazon seller solutions to grow your business.",
+    title: SEO_CONFIG.home.title,
+    description: SEO_CONFIG.home.description,
+    images: ['https://fakhriitservices.com/twitter-image.png'],
   }
 };
 

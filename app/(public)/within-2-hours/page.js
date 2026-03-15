@@ -1,9 +1,11 @@
 import Within2HoursContent from '@/components/within-2-hours/Within2HoursContent';
 
+import { SEO_CONFIG } from '@/lib/seo-config';
+
 export const metadata = {
-    title: "Within 2 Hours Support | Fakhri IT Services - Priority Assistance",
+    title: "Within 2 Hours support | " + SEO_CONFIG.home.title,
     description: "Get urgent Amazon seller support within 2 hours. Priority handling for account issues, listing problems, and critical business needs.",
-    keywords: "urgent Amazon support, priority seller help, quick Amazon assistance",
+    keywords: [...SEO_CONFIG.services.keywords, "urgent Amazon support", "priority seller help", "quick Amazon assistance"],
 };
 
 export default function Within2HoursPage() {

@@ -1,13 +1,15 @@
 import BlogContent from '@/components/blog/BlogContent';
 
 
+import { SEO_CONFIG } from '@/lib/seo-config';
+
 export const metadata = {
-    title: "Blog | Fakhri IT Services - Amazon Seller Insights & Tips",
-    description: "Expert insights, tips, and strategies for Amazon sellers. Stay updated with the latest marketplace trends and growth tactics.",
-    keywords: ["Amazon seller blog", "e-commerce tips", "Amazon strategies", "FBA guides", "PPC tips"],
+    title: SEO_CONFIG.blog.title,
+    description: SEO_CONFIG.blog.description,
+    keywords: SEO_CONFIG.blog.keywords,
     openGraph: {
-        title: "Blog | Fakhri IT Services",
-        description: "Expert insights for Amazon sellers.",
+        title: SEO_CONFIG.blog.title,
+        description: SEO_CONFIG.blog.description,
         url: 'https://fakhriitservices.com/blog',
         siteName: 'Fakhri IT Services',
         locale: 'en_US',

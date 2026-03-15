@@ -19,14 +19,16 @@ const poppins = Poppins({
   display: 'swap',
 });
 
+import { BASE_KEYWORDS } from "@/lib/seo-config";
+
 export const metadata = {
   metadataBase: new URL('https://fakhriitservices.com'), // Replace with actual domain if known, or use localhost for dev
   title: {
-    default: "Fakhri IT Services | No.1 Amazon Seller Services Partner",
+    default: "Fakhri IT Services | #1 Amazon SPN & Growth Partner India",
     template: "%s | Fakhri IT Services"
   },
-  description: "Your trusted Amazon seller services partner since 2016. Expert account management, FBA operations, PPC advertising, and growth strategies for Amazon sellers.",
-  keywords: ["Amazon seller services", "Amazon account management", "FBA services", "Amazon PPC", "Amazon consulting"],
+  description: "Scale your Amazon business with India's leading SPN partner since 2016. ROI-focused PPC, stunning A+ content, and expert account management.",
+  keywords: BASE_KEYWORDS,
   authors: [{ name: "Fakhri IT Services" }],
   creator: "Fakhri IT Services",
   publisher: "Fakhri IT Services",

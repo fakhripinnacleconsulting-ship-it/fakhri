@@ -4,13 +4,15 @@ import PricingContent from '@/components/pricing/PricingContent';
 export const dynamic = "force-dynamic";
 
 
+import { SEO_CONFIG } from '@/lib/seo-config';
+
 export const metadata = {
-    title: "Pricing Plans | Fakhri IT Services - Transparent Amazon Service Pricing",
-    description: "Flexible pricing plans for Amazon sellers. Choose from Elite, Premium, and Platinum packages designed to scale your Amazon business.",
-    keywords: ["Amazon services pricing", "seller services cost", "Amazon management packages", "FBA fees", "PPC management cost"],
+    title: SEO_CONFIG.pricing.title,
+    description: SEO_CONFIG.pricing.description,
+    keywords: SEO_CONFIG.pricing.keywords,
     openGraph: {
-        title: "Pricing Plans | Fakhri IT Services",
-        description: "Transparent pricing for Amazon success.",
+        title: SEO_CONFIG.pricing.title,
+        description: SEO_CONFIG.pricing.description,
         url: 'https://fakhriitservices.com/pricing',
         siteName: 'Fakhri IT Services',
         locale: 'en_US',
