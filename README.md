@@ -26,7 +26,7 @@ Official web platform for Fakhri IT Services, a premier agency dedicated to empo
 ## 📦 Getting Started
 
 Follow these steps to set up the project locally.
-
+ 
 ### Prerequisites
 
 *   Node.js (v18 or higher recommended)
