@@ -10,6 +10,10 @@ const analyticsSchema = new mongoose.Schema({
         type: String,
         required: false
     },
+    userName: {
+        type: String,
+        required: false
+    },
     path: {
         type: String,
         required: true
