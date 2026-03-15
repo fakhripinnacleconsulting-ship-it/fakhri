@@ -83,7 +83,7 @@ export default async function Home() {
       <Partners company={company} />
       <ServicesPreview services={services} />
       <WhyChooseUs company={company} />
-      <CTA />
+      <CTA company={company} />
       <Testimonials testimonials={testimonials} />
       <FaQ data={homeFAQs} />
     </>

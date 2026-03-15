@@ -158,7 +158,7 @@ export default function Within2HoursContent() {
 
                                 <div className="flex flex-wrap gap-4">
                                     <a
-                                        href={`https://wa.me/${company?.contact?.phone?.whatsapp || '919584426543'}`}
+                                        href={`https://wa.me/${company?.contact?.phone?.whatsapp || '918982675004'}`}
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="btn-primary group"
@@ -345,7 +345,7 @@ export default function Within2HoursContent() {
                                 </p>
                                 <div className="flex flex-wrap justify-center gap-4">
                                     <a
-                                        href={`https://wa.me/${company?.contact?.phone?.whatsapp || '919584426543'}`}
+                                        href={`https://wa.me/${company?.contact?.phone?.whatsapp || '918982675004'}`}
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="inline-flex items-center justify-center px-8 py-4 bg-background text-primary font-poppins font-semibold rounded-lg transition-all duration-300 hover:shadow-xl"

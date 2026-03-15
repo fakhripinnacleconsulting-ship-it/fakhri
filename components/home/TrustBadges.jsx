@@ -3,11 +3,7 @@
 import { StaggerContainer, StaggerItem } from '@/components/animations/ScrollReveal';
 
 export default function TrustBadges({ company }) {
-    const badges = company?.badges || [
-        { title: "Amazon SPN Partner", subtitle: "Certified Service Provider" },
-        { title: "Since 2016", subtitle: "8+ Years of Excellence" },
-        { title: "500+", subtitle: "Happy Clients" },
-    ];
+    const badges = company?.badges || [];
 
     return (
         <section className="py-10 bg-[#f3f3f3]">

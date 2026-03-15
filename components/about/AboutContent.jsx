@@ -23,40 +23,11 @@ const iconMap = {
     Trophy
 };
 
-const whyChooseUs = [
-    {
-        title: "Amazon SPN & Affiliate Partner",
-        description: "Officially recognized by Amazon for our expertise and service quality.",
-        icon: "Shield"
-    },
-    {
-        title: "Dedicated Account Managers",
-        description: "Personalized attention with a single point of contact for your business.",
-        icon: "Users"
-    },
-    {
-        title: "Creative A+ & EBC Experts",
-        description: "Award-winning design team that transforms listings into brand experiences.",
-        icon: "Zap"
-    },
-    {
-        title: "Performance-Driven Ads",
-        description: "ROI-focused PPC campaigns that minimize ACOS and maximize sales.",
-        icon: "Target"
-    },
-    {
-        title: "Transparent Reporting",
-        description: "Clear, actionable insights delivered weekly so you always know your standing.",
-        icon: "BarChart"
-    },
-    {
-        title: "Long-Term Growth Focus",
-        description: "We don't just chase quick wins; we build sustainable brands.",
-        icon: "Trophy"
-    }
-];
+
 
 export default function AboutContent({ team = [], company = null }) {
+    const whyChooseItems = company?.whyChooseUs || [];
+    const storyHighlights = company?.story?.highlights || [];
     const teamCategories = useMemo(() => {
         const categories = [...new Set(team.map(m => m.category))];
         return categories.filter(Boolean);
@@ -74,7 +45,7 @@ export default function AboutContent({ team = [], company = null }) {
                 <div className="container-custom relative z-10">
                     <ScrollReveal>
                         <div className="text-center max-w-4xl mx-auto">
-                            <span className="badge-primary mb-4">About Fakhri IT Services</span>
+                            <span className="badge-primary mb-4">About {company?.name || "Fakhri IT Services"}</span>
                             <h1 className="heading-xl mb-6">
                                 {company?.tagline || "We Are Your Growth Partners in the Amazon Marketplace"}
                             </h1>
@@ -117,7 +88,7 @@ export default function AboutContent({ team = [], company = null }) {
                                     <div className="text-white">
                                         <Quote className="w-8 h-8 mb-4 text-white/80" />
                                         <p className="text-lg font-medium italic">
-                                            &ldquo;Our mission is to empower Amazon sellers with expert services that drive sustainable growth.&rdquo;
+                                            &ldquo;{company?.mission || "Our mission is to empower Amazon sellers with expert services that drive sustainable growth."}&rdquo;
                                         </p>
                                     </div>
                                 </div>
@@ -131,12 +102,7 @@ export default function AboutContent({ team = [], company = null }) {
                                     {company?.story?.content || "Your trusted partner for Amazon success. We provide end-to-end Amazon seller services that help brands scale from startup to marketplace dominance. Our methodology combines data-driven insights with creative excellence to deliver measurable results."}
                                 </p>
                                 <ul className="space-y-4">
-                                    {[
-                                        "Specialized Amazon Account Management",
-                                        "Data-Backed Advertising Strategies",
-                                        "Creative Design & Brand Storytelling",
-                                        "Technical SEO & Listing Optimization"
-                                    ].map((point, index) => (
+                                    {storyHighlights.map((point, index) => (
                                         <li key={index} className="flex items-center gap-3">
                                             <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                                                 <div className="w-2 h-2 rounded-full bg-primary" />
@@ -150,6 +116,48 @@ export default function AboutContent({ team = [], company = null }) {
                     </div>
                 </div>
             </section>
+            
+            {/* Vision & Values Section */}
+            {(company?.vision || company?.culture?.values?.length > 0) && (
+                <section className="section-padding bg-secondary/10">
+                    <div className="container-custom">
+                        <div className="grid lg:grid-cols-2 gap-16 items-center">
+                            {company?.vision && (
+                                <ScrollReveal direction="left">
+                                    <div>
+                                        <span className="badge-primary mb-4">Our Vision</span>
+                                        <h2 className="heading-lg mb-6">Building the Future of Amazon Brands</h2>
+                                        <p className="body-lg text-muted-foreground italic border-l-4 border-primary pl-6">
+                                            {company.vision}
+                                        </p>
+                                    </div>
+                                </ScrollReveal>
+                            )}
+
+                            {company?.culture?.values?.length > 0 && (
+                                <ScrollReveal direction="right">
+                                    <div>
+                                        <h3 className="heading-md mb-8">{company.culture.title || "Our Core Values"}</h3>
+                                        <div className="grid gap-6">
+                                            {company.culture.values.map((v, i) => (
+                                                <div key={i} className="flex gap-4">
+                                                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0 font-bold text-primary">
+                                                        {i + 1}
+                                                    </div>
+                                                    <div>
+                                                        <h4 className="font-bold text-lg mb-1">{v.title}</h4>
+                                                        <p className="text-muted-foreground text-sm">{v.description}</p>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </ScrollReveal>
+                            )}
+                        </div>
+                    </div>
+                </section>
+            )}
 
             {/* Company Timeline Section */}
             <CompanyTimeline />
@@ -163,7 +171,7 @@ export default function AboutContent({ team = [], company = null }) {
                             <ScrollReveal>
                                 <h2 className="heading-lg mb-4">Meet Our Leadership</h2>
                                 <p className="body-md">
-                                    The visionaries driving excellence and innovation at Fakhri IT Services.
+                                    The visionaries driving excellence and innovation at {company?.name || "Fakhri IT Services"}.
                                 </p>
                             </ScrollReveal>
                         </div>
@@ -233,7 +241,7 @@ export default function AboutContent({ team = [], company = null }) {
                     </ScrollReveal>
 
                     <StaggerContainer className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {whyChooseUs.map((item, index) => {
+                        {whyChooseItems.map((item, index) => {
                             const Icon = iconMap[item.icon] || Shield;
                             return (
                                 <StaggerItem key={index}>

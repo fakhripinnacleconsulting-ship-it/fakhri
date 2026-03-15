@@ -23,6 +23,7 @@ import { ScrollableContainer } from "@/components/ui/scrollable-container";
 import { normalizePeriod, formatINR, cn } from "@/lib/utils";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { IconPicker } from "@/components/ui/icon-picker";
 
 const CreatableCombobox = ({ value, onChange, options, placeholder, emptyText = "No option found." }) => {
     const [open, setOpen] = useState(false);
@@ -456,6 +457,12 @@ function ObjectArrayInput({ values = [], onChange, label, fields }) {
                                             value={val[field.name] || ""}
                                             onChange={(v) => handleChange(index, field.name, v)}
                                         />
+                                    ) : field.type === 'icon' ? (
+                                        <IconPicker
+                                            value={val[field.name] || ""}
+                                            onChange={(v) => handleChange(index, field.name, v)}
+                                            placeholder={field.placeholder}
+                                        />
                                     ) : (
                                         <Input
                                             value={val[field.name] || ""}
@@ -478,9 +485,9 @@ function ObjectArrayInput({ values = [], onChange, label, fields }) {
 function CompanyManager({ data, onUpdate, refreshData }) {
     const [formData, setFormData] = useState(data || {
         name: "", tagline: "", established: "", description: "", logo: "",
-        contact: { phone: { primary: "", secondary: "" }, email: { info: "", support: "" }, address: { full: "" }, social: { linkedin: "", instagram: "" } },
+        contact: { phone: { primary: "", secondary: "", whatsapp: "" }, email: { info: "", support: "", general: "" }, address: { full: "" }, social: { linkedin: "", instagram: "" } },
         mission: "", vision: "", story: { title: "", content: "", highlights: [] },
-        badges: [], stats: [], culture: { title: "", values: [] }, partners: []
+        badges: [], stats: [], culture: { title: "", values: [] }, partners: [], whyChooseUs: []
     });
 
     useEffect(() => {
@@ -491,7 +498,8 @@ function CompanyManager({ data, onUpdate, refreshData }) {
                 badges: data.badges || [],
                 stats: data.stats || [],
                 culture: data.culture || { title: "", values: [] },
-                partners: data.partners || []
+                partners: data.partners || [],
+                whyChooseUs: data.whyChooseUs || []
             });
         }
     }, [data]);
@@ -565,13 +573,15 @@ function CompanyManager({ data, onUpdate, refreshData }) {
                 <Card>
                     <CardHeader><CardTitle>Contact Details</CardTitle></CardHeader>
                     <CardContent className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-3 gap-4">
                             <div className="grid gap-2"><Label>Primary Phone</Label><Input value={formData.contact?.phone?.primary} onChange={(e) => handleChange('contact', 'phone', { ...formData.contact.phone, primary: e.target.value })} /></div>
                             <div className="grid gap-2"><Label>Secondary Phone</Label><Input value={formData.contact?.phone?.secondary} onChange={(e) => handleChange('contact', 'phone', { ...formData.contact.phone, secondary: e.target.value })} /></div>
+                            <div className="grid gap-2"><Label>WhatsApp Number</Label><Input value={formData.contact?.phone?.whatsapp} onChange={(e) => handleChange('contact', 'phone', { ...formData.contact.phone, whatsapp: e.target.value })} placeholder="e.g. 919584426543" /></div>
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-3 gap-4">
                             <div className="grid gap-2"><Label>Info Email</Label><Input value={formData.contact?.email?.info} onChange={(e) => handleChange('contact', 'email', { ...formData.contact.email, info: e.target.value })} /></div>
                             <div className="grid gap-2"><Label>Support Email</Label><Input value={formData.contact?.email?.support} onChange={(e) => handleChange('contact', 'email', { ...formData.contact.email, support: e.target.value })} /></div>
+                            <div className="grid gap-2"><Label>General Email</Label><Input value={formData.contact?.email?.general} onChange={(e) => handleChange('contact', 'email', { ...formData.contact.email, general: e.target.value })} /></div>
                         </div>
                         <div className="grid gap-2"><Label>Full Address</Label><Textarea value={formData.contact?.address?.full} onChange={(e) => handleChange('contact', 'address', { ...formData.contact.address, full: e.target.value })} /></div>
                         <div className="grid grid-cols-2 gap-4 pt-2 border-t">
@@ -628,7 +638,7 @@ function CompanyManager({ data, onUpdate, refreshData }) {
                     </CardContent>
                 </Card>
 
-                {/* <Card className="md:col-span-2">
+                <Card className="md:col-span-2">
                     <CardHeader><CardTitle>Culture & Values</CardTitle></CardHeader>
                     <CardContent className="space-y-6">
                         <div className="grid gap-2"><Label>Section Title</Label><Input value={formData.culture?.title} onChange={(e) => handleChange('culture', 'title', e.target.value)} placeholder="e.g. Our Core Values" className="max-w-md" /></div>
@@ -642,7 +652,23 @@ function CompanyManager({ data, onUpdate, refreshData }) {
                             ]}
                         />
                     </CardContent>
-                </Card> */}
+                </Card>
+
+                <Card className="md:col-span-2">
+                    <CardHeader><CardTitle>Why Choose Us (Core Reasons)</CardTitle></CardHeader>
+                    <CardContent className="space-y-6">
+                        <ObjectArrayInput
+                            label="Why Choose Us"
+                            values={formData.whyChooseUs}
+                            onChange={(val) => handleChange(null, 'whyChooseUs', val)}
+                            fields={[
+                                { name: 'title', label: 'Point Title', placeholder: 'e.g. Dedicated Account Managers' },
+                                { name: 'description', label: 'Short Description', placeholder: 'e.g. Personalized attention with a single point...', fullWidth: true },
+                                { name: 'icon', label: 'Icon (Lucide)', type: 'icon', placeholder: 'Select Icon' }
+                            ]}
+                        />
+                    </CardContent>
+                </Card>
 
                 <Card className="md:col-span-2">
                     <CardHeader><CardTitle>Partners & Brands</CardTitle></CardHeader>
@@ -2562,6 +2588,7 @@ function ServiceManager({ data, onUpdate, refreshData }) {
     const [isViewMode, setIsViewMode] = useState(false);
     const [features, setFeatures] = useState([]);
     const [benefits, setBenefits] = useState([]);
+    const [selectedIcon, setSelectedIcon] = useState("Shield");
     const [isLoading, setIsLoading] = useState(false);
 
     const handleOpen = (service, view) => {
@@ -2569,6 +2596,7 @@ function ServiceManager({ data, onUpdate, refreshData }) {
         setIsViewMode(view);
         setFeatures(service?.features || []);
         setBenefits(service?.benefits || []);
+        setSelectedIcon(service?.icon || "Shield");
         setIsDialogOpen(true);
     };
 
@@ -2604,7 +2632,7 @@ function ServiceManager({ data, onUpdate, refreshData }) {
             title: formData.get("title"),
             shortDescription: formData.get("shortDescription"),
             fullDescription: formData.get("fullDescription"),
-            icon: formData.get("icon"),
+            icon: selectedIcon,
             category: formData.get("category"),
             features: features,
             benefits: benefits,
@@ -2735,7 +2763,10 @@ function ServiceManager({ data, onUpdate, refreshData }) {
                             <form id="service-form" onSubmit={handleSave} className="space-y-6">
                                 <div className="grid md:grid-cols-2 gap-4">
                                     <div className="grid gap-2"><Label>Title</Label><Input name="title" defaultValue={currentService?.title} required /></div>
-                                    <div className="grid gap-2"><Label>Icon Name (Lucide)</Label><Input name="icon" defaultValue={currentService?.icon} placeholder="e.g. Shield" /></div>
+                                    <div className="grid gap-2">
+                                        <Label>Icon (Lucide)</Label>
+                                        <IconPicker value={selectedIcon} onChange={setSelectedIcon} />
+                                    </div>
                                 </div>
                                 <div className="grid gap-2"><Label>Category</Label><Select name="category" defaultValue={currentService?.category}><SelectTrigger><SelectValue placeholder="Select Category" /></SelectTrigger><SelectContent><SelectItem value="Account Services">Account Services</SelectItem><SelectItem value="Listing & Content">Listing & Content</SelectItem><SelectItem value="Operations">Operations</SelectItem><SelectItem value="Growth">Growth</SelectItem></SelectContent></Select></div>
                                 <div className="grid gap-2"><Label>Short Description</Label><Textarea name="shortDescription" defaultValue={currentService?.shortDescription} rows={2} /></div>

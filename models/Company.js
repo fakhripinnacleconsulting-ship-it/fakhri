@@ -62,6 +62,11 @@ const CompanySchema = new mongoose.Schema({
     partners: [{
         name: { type: String },
         logo: { type: String }
+    }],
+    whyChooseUs: [{
+        title: { type: String },
+        description: { type: String },
+        icon: { type: String }
     }]
 }, { timestamps: true });
 

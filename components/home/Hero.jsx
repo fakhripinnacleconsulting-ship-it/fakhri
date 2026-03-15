@@ -92,7 +92,7 @@ export default function Hero({ company }) {
                             transition={{ duration: 0.6, delay: 0.1 }}
                             className="heading-xl mb-6"
                         >
-                            Your <span className="text-primary">No.1 Growth Partner</span> for Amazon Success
+                            {company?.tagline || "Your No.1 Growth Partner for Amazon Success"}
                         </motion.h1>
 
                         {/* Description */}
@@ -102,7 +102,7 @@ export default function Hero({ company }) {
                             transition={{ duration: 0.6, delay: 0.2 }}
                             className="body-lg mb-8 max-w-xl"
                         >
-                            {company?.description || 'Your trusted Amazon seller services partner since 2016. Expert account management, FBA operations, PPC advertising, and growth strategies for Amazon sellers.'}
+                            {company?.description || 'Your trusted Amazon seller services partner. Expert account management, FBA operations, PPC advertising, and growth strategies for Amazon sellers.'}
                         </motion.p>
 
                         {/* CTAs */}
