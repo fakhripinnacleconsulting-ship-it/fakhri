@@ -2,7 +2,7 @@
 
 Official web platform for Fakhri IT Services, a premier agency dedicated to empowering Amazon sellers with expert account management, advertising strategies, and growth solutions. This is a comprehensive, full-stack web application built using Next.js, Tailwind CSS, and MongoDB.
 
-## 🚀 Key Features
+## 🚀 Key Features 
 
 *   **Public Facing Website**: A modern, responsive, and SEO-optimized public website showcasing services, pricing plans, blog posts, and company information.
 *   **Multi-Role Authentication**: Secure login system using NextAuth with support for Google OAuth and Credentials, handling three distinct user roles: `client`, `admin`, and `super-admin`.
