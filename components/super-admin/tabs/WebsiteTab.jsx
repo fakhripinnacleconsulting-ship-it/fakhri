@@ -106,6 +106,7 @@ import {
     getTestimonials, upsertTestimonial, deleteTestimonial,
     getFAQs, upsertFAQ, deleteFAQ,
     getJobs, upsertJob, deleteJob,
+    getHSNs, upsertHSN, deleteHSN,
     getWebPage, upsertWebPage
 } from "@/lib/actions/content";
 import { getBlogPosts, upsertBlogPost, deleteBlogPost } from "@/lib/actions/blog";
@@ -127,6 +128,7 @@ export default function WebsiteTab() {
     const [jobs, setJobs] = useState([]);
     const [milestones, setMilestones] = useState([]);
     const [posts, setPosts] = useState([]);
+    const [hsnCodes, setHsnCodes] = useState([]);
 
     const loadAllData = useCallback(async (silent = false) => {
         if (!silent) setLoading(true);
@@ -142,7 +144,8 @@ export default function WebsiteTab() {
                 faqsData,
                 jobsData,
                 milestonesData,
-                blogData
+                blogData,
+                hsnData
             ] = await Promise.all([
                 getCompanyData(),
                 getTeamMembers(),
@@ -154,7 +157,8 @@ export default function WebsiteTab() {
                 getFAQs(),
                 getJobs(),
                 getMilestones(),
-                getBlogPosts()
+                getBlogPosts(),
+                getHSNs()
             ]);
 
             setCompanyInfo(companyData || {});
@@ -183,6 +187,7 @@ export default function WebsiteTab() {
             setJobs(jobsData || []);
             setMilestones(milestonesData || []);
             setPosts(blogData?.posts || []);
+            setHsnCodes(hsnData || []);
 
         } catch (error) {
             console.error("Failed to load CMS data:", error);
@@ -248,6 +253,10 @@ export default function WebsiteTab() {
                     const roles = await getJobs();
                     setJobs(roles);
                     break;
+                case "HSN":
+                    const hsn = await getHSNs();
+                    setHsnCodes(hsn);
+                    break;
                 case "Milestones":
                     const ms = await getMilestones();
                     setMilestones(ms);
@@ -277,6 +286,7 @@ export default function WebsiteTab() {
         { id: "Testimonials", label: "Client Love", icon: MessageSquare, description: "Display social proof and client success stories." },
         { id: "FAQs", label: "Knowledge Base", icon: HelpCircle, description: "Provide answers to commonly asked customer questions." },
         { id: "Jobs", label: "Open Positions", icon: Shield, description: "Manage company vacancies and career opportunities." },
+        { id: "HSN", label: "HSN Management", icon: FileText, description: "Manage SAC/HSN Codes for services." },
         { id: "Milestones", label: "Milestones", icon: ChevronRight, description: "Track and showcase key company achievements over time." },
         { id: "Legal", label: "Legal Center", icon: Shield, description: "Manage terms of service, privacy policy and legal pages." },
     ], []);
@@ -348,6 +358,7 @@ export default function WebsiteTab() {
                 {activeCategory === "Testimonials" && <TestimonialManager data={testimonials} onUpdate={setTestimonials} refreshData={refreshCategoryData} />}
                 {activeCategory === "FAQs" && <FAQManager data={faqs} onUpdate={setFaqs} refreshData={refreshCategoryData} />}
                 {activeCategory === "Jobs" && <JobManager data={jobs} onUpdate={setJobs} refreshData={refreshCategoryData} />}
+                {activeCategory === "HSN" && <HSNManager data={hsnCodes} onUpdate={setHsnCodes} refreshData={refreshCategoryData} />}
                 {activeCategory === "Legal" && <LegalManager />}
             </div>
         </div>
@@ -3532,3 +3543,250 @@ function LegalManager() {
         </div>
     );
 }
+
+// 13. HSN Manager
+function HSNManager({ data, onUpdate, refreshData }) {
+    const [hsnList, setHsnList] = useState(Array.isArray(data) ? data : []);
+
+    useEffect(() => {
+        if (Array.isArray(data)) setHsnList(data);
+    }, [data]);
+
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [currentHSN, setCurrentHSN] = useState(null);
+    const [isViewMode, setIsViewMode] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    const [searchQuery, setSearchQuery] = useState("");
+
+    const handleDelete = async (id) => {
+        if (confirm("Delete this HSN Code?")) {
+            setIsLoading(true);
+            try {
+                const res = await deleteHSN(id);
+                if (res.success) {
+                    const updated = hsnList.filter(h => h._id !== id && h.id !== id);
+                    setHsnList(updated);
+                    onUpdate(updated);
+                    toast.success("Deleted");
+                } else {
+                    toast.error("Failed to delete");
+                }
+            } catch (error) {
+                toast.error("Error deleting HSN Code");
+            } finally {
+                setIsLoading(false);
+            }
+        }
+    };
+
+    const handleSave = async (e) => {
+        e.preventDefault();
+        setIsLoading(true);
+        const formData = new FormData(e.target);
+
+        const newHSN = {
+            id: currentHSN ? (currentHSN._id || currentHSN.id) : undefined,
+            serviceName: formData.get("serviceName"),
+            hsnCode: formData.get("hsnCode"),
+            description: formData.get("description"),
+            order: Number(formData.get("order")) || hsnList.length + 1
+        };
+
+        try {
+            const savedHSN = await upsertHSN(newHSN);
+            if (savedHSN) {
+                const updatedList = hsnList.some(h => h._id === savedHSN._id || h.id === savedHSN.id)
+                    ? hsnList.map(h => (h._id === savedHSN._id || h.id === savedHSN.id) ? savedHSN : h)
+                    : [...hsnList, savedHSN];
+
+                setHsnList(updatedList);
+                onUpdate(updatedList);
+                toast.success(currentHSN ? "Updated" : "Added");
+                setIsDialogOpen(false);
+                if (refreshData) refreshData(true);
+            } else {
+                toast.error("Failed to save HSN code");
+            }
+        } catch (error) {
+            console.error(error);
+            toast.error("An error occurred");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const [sortConfig, setSortConfig] = useState({ key: "serviceName", direction: "asc" });
+
+    const handleSort = (key) => {
+        setSortConfig(prev => ({
+            key,
+            direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc'
+        }));
+    };
+
+    const getSortIcon = (key) => {
+        if (sortConfig.key !== key) return <ChevronsUpDown className="ml-2 h-3 w-3 opacity-40 shrink-0" />;
+        return sortConfig.direction === 'asc'
+            ? <ArrowUp className="ml-2 h-3 w-3 text-primary shrink-0" />
+            : <ArrowDown className="ml-2 h-3 w-3 text-primary shrink-0" />;
+    };
+
+    const filteredHSNs = useMemo(() => {
+        return hsnList.filter(h =>
+            h.serviceName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            h.hsnCode?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            h.description?.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+    }, [hsnList, searchQuery]);
+
+    const sortedHSNs = useMemo(() => {
+        return [...filteredHSNs].sort((a, b) => {
+            let aVal = a[sortConfig.key] || "";
+            let bVal = b[sortConfig.key] || "";
+            if (typeof aVal === 'string') aVal = aVal.toLowerCase();
+            if (typeof bVal === 'string') bVal = bVal.toLowerCase();
+            if (aVal < bVal) return sortConfig.direction === 'asc' ? -1 : 1;
+            if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1;
+            return 0;
+        });
+    }, [filteredHSNs, sortConfig]);
+
+    return (
+        <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-muted/30 p-4 rounded-xl border border-dashed">
+                <div className="relative w-full md:max-w-md">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                        placeholder="Search by Service or Code..."
+                        className="pl-10 h-10"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                </div>
+                <div className="flex gap-2 w-full md:w-auto">
+                    <Button variant="outline" size="sm" onClick={() => refreshData()} title="Refresh Data" className="h-10">
+                        <RefreshCw className="w-4 h-4 mr-2" />
+                        Refresh
+                    </Button>
+                    <Button onClick={() => { setCurrentHSN(null); setIsViewMode(false); setIsDialogOpen(true); }} className="h-10 bg-primary shadow-lg shadow-primary/20">
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add HSN/SAC
+                    </Button>
+                </div>
+            </div>
+
+            <div className="rounded-md border bg-card overflow-hidden">
+                <ScrollableContainer maxHeight="70vh">
+                    <Table wrapperClassName="overflow-visible">
+                        <TableHeader className="sticky top-0 z-10 bg-card shadow-sm border-b">
+                            <TableRow>
+                                <TableHead>
+                                    <button onClick={() => handleSort('serviceName')} className="flex items-center hover:text-primary transition-colors font-bold uppercase text-[11px] tracking-wider whitespace-nowrap">
+                                        Service {getSortIcon('serviceName')}
+                                    </button>
+                                </TableHead>
+                                <TableHead>
+                                    <button onClick={() => handleSort('hsnCode')} className="flex items-center hover:text-primary transition-colors font-bold uppercase text-[11px] tracking-wider whitespace-nowrap">
+                                        Suggested SAC / HSN Code {getSortIcon('hsnCode')}
+                                    </button>
+                                </TableHead>
+                                <TableHead>
+                                    <button onClick={() => handleSort('description')} className="flex items-center hover:text-primary transition-colors font-bold uppercase text-[11px] tracking-wider whitespace-nowrap">
+                                        Description {getSortIcon('description')}
+                                    </button>
+                                </TableHead>
+                                <TableHead className="text-right font-bold uppercase text-[11px] tracking-wider whitespace-nowrap">Actions</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {isLoading && hsnList.length === 0 ? (
+                                <TableRow>
+                                    <TableCell colSpan={4} className="h-24 text-center">
+                                        <Loader2 className="h-6 w-6 animate-spin mx-auto text-primary" />
+                                    </TableCell>
+                                </TableRow>
+                            ) : sortedHSNs.length === 0 ? (
+                                <TableRow>
+                                    <TableCell colSpan={4} className="h-32 text-center">
+                                        <div className="flex flex-col items-center justify-center text-muted-foreground">
+                                            <FileText className="h-8 w-8 mb-2 opacity-20" />
+                                            <p className="text-sm font-medium">No HSN/SAC codes found</p>
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            ) : (
+                                sortedHSNs.map((hsn, index) => (
+                                    <TableRow key={hsn._id || hsn.id || index} className="group hover:bg-muted/50 transition-colors">
+                                        <TableCell className="font-medium">{hsn.serviceName}</TableCell>
+                                        <TableCell>
+                                            <Badge variant="outline" className="bg-background/50">{hsn.hsnCode}</Badge>
+                                        </TableCell>
+                                        <TableCell className="max-w-[300px] truncate text-muted-foreground">
+                                            {hsn.description}
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-white/10" onClick={() => { setCurrentHSN(hsn); setIsViewMode(true); setIsDialogOpen(true); }}>
+                                                    <Eye className="w-4 h-4 text-primary" />
+                                                </Button>
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-white/10" onClick={() => { setCurrentHSN(hsn); setIsViewMode(false); setIsDialogOpen(true); }}>
+                                                    <Edit className="w-4 h-4 text-blue-400" />
+                                                </Button>
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-white/10 hover:text-destructive" onClick={() => handleDelete(hsn._id || hsn.id)}>
+                                                    <Trash2 className="w-4 h-4" />
+                                                </Button>
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                            )}
+                        </TableBody>
+                    </Table>
+                </ScrollableContainer>
+            </div>
+
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col p-0 border-0 bg-background/95 backdrop-blur-xl">
+                    <div className="flex items-center justify-between px-6 py-4 border-b bg-muted/30">
+                        <DialogTitle className="text-xl font-semibold flex items-center gap-2">
+                            {isViewMode ? <Eye className="w-5 h-5 text-primary" /> : <Edit className="w-5 h-5 text-primary" />}
+                            {isViewMode ? "View HSN Code" : currentHSN ? "Edit HSN Code" : "Add New HSN Code"}
+                        </DialogTitle>
+                    </div>
+
+                    <ScrollableContainer maxHeight="calc(90vh - 140px)">
+                        <div className="p-6">
+                            <form id="hsn-form" onSubmit={handleSave} className="space-y-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label>Service Name <span className="text-destructive">*</span></Label>
+                                        <Input name="serviceName" defaultValue={currentHSN?.serviceName} required readOnly={isViewMode} placeholder="e.g. Amazon Account Management Services" className={isViewMode ? "bg-muted/50" : ""} />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>Suggested SAC / HSN Code <span className="text-destructive">*</span></Label>
+                                        <Input name="hsnCode" defaultValue={currentHSN?.hsnCode} required readOnly={isViewMode} placeholder="e.g. 998311" className={isViewMode ? "bg-muted/50" : ""} />
+                                    </div>
+                                    <div className="space-y-2 md:col-span-2">
+                                        <Label>Description <span className="text-destructive">*</span></Label>
+                                        <Textarea name="description" defaultValue={currentHSN?.description} required readOnly={isViewMode} placeholder="e.g. Management consulting & business management services" rows={3} className={isViewMode ? "bg-muted/50" : ""} />
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </ScrollableContainer>
+
+                    {!isViewMode && (
+                        <div className="px-6 py-4 border-t bg-muted/30 flex justify-end gap-3 mt-auto">
+                            <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} disabled={isLoading}>Cancel</Button>
+                            <Button type="submit" form="hsn-form" disabled={isLoading} className="bg-primary text-primary-foreground shadow-md">
+                                {isLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+                                Save HSN Code
+                            </Button>
+                        </div>
+                    )}
+                </DialogContent>
+            </Dialog>
+        </div>
+    );
+}
+

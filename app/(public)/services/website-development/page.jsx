@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ArrowRight, ShieldCheck, Truck, Link as LinkIcon, Percent, Database, TrendingUp, XCircle, CheckCircle2, ChevronRight, Phone } from 'lucide-react';
+import { ArrowRight, ShieldCheck, Truck, Link as LinkIcon, Percent, Database, TrendingUp, XCircle, CheckCircle2, ChevronRight, Phone, ArrowLeft, Briefcase } from 'lucide-react';
 import { ScrollReveal } from '@/components/animations/ScrollReveal';
 import { ContactDialog } from '@/components/dialogs/ContactDialog';
 
@@ -35,7 +35,44 @@ export default function WebsiteDevelopmentPage() {
             availability: 'https://schema.org/InStock'
         }
     };
+    return (
+        <>
+            <div className="flex items-center justify-center min-h-screen bg-gray-50 px-6">
+                <div className="text-center max-w-xl">
 
+                    <h1 className="text-5xl font-bold text-gray-800 mb-4">
+                        🚧 Under Construction
+                    </h1>
+
+                    <p className="text-gray-600 text-lg mb-8">
+                        We're currently working on this page. Meanwhile you can explore other
+                        sections of the website.
+                    </p>
+
+                    <div className="flex gap-4 justify-center flex-wrap">
+
+                        <Link
+                            href="/"
+                            className="flex items-center gap-2 px-6 py-3 bg-black text-white rounded-lg hover:bg-gray-800 transition"
+                        >
+                            <ArrowLeft size={18} />
+                            Back to Home
+                        </Link>
+
+                        <Link
+                            href="/services"
+                            className="flex items-center gap-2 px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-100 transition"
+                        >
+                            <Briefcase size={18} />
+                            View Services
+                        </Link>
+
+                    </div>
+
+                </div>
+            </div>
+        </>
+    )
     return (
         <div className="bg-background">
             <script
