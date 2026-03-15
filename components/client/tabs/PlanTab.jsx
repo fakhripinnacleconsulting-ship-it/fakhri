@@ -123,7 +123,8 @@ const ClientPlanTab = ({ currentUser, managerPhone, managerName }) => {
                         category: s.category,
                         price: s.pricing.standard.price,
                         priceLabel: s.pricing.standard.label || "",
-                        type: 'standard'
+                        type: 'standard',
+                        hsnCode: s.hsnCode || '998311'
                     });
                 }
                 // Add priority if it exists and has a price
@@ -135,7 +136,8 @@ const ClientPlanTab = ({ currentUser, managerPhone, managerName }) => {
                         category: s.category,
                         price: s.pricing.priority.price,
                         priceLabel: s.pricing.priority.label || "",
-                        type: 'priority'
+                        type: 'priority',
+                        hsnCode: s.hsnCode || '998311'
                     });
                 }
             }
@@ -167,7 +169,8 @@ const ClientPlanTab = ({ currentUser, managerPhone, managerName }) => {
             price: service.price,
             category: service.category,
             quantity: quantity,
-            type: service.type
+            type: service.type,
+            hsnCode: service.hsnCode || '998311'
         });
         // Reset quantity to 1 after adding
         setQuantities(prev => ({ ...prev, [service.id]: 1 }));

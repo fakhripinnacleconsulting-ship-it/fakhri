@@ -349,10 +349,10 @@ export default function WebsiteTab() {
             <div className="min-h-[500px]">
                 {activeCategory === "Company" && <CompanyManager data={companyInfo} onUpdate={setCompanyInfo} refreshData={refreshCategoryData} />}
                 {activeCategory === "Team" && <TeamManager data={members} onUpdate={setMembers} refreshData={refreshCategoryData} />}
-                {activeCategory === "Pricing" && <PricingManager data={pricingPlans} featuresData={pricingFeatures} onUpdate={setPricingPlans} refreshData={refreshCategoryData} />}
+                {activeCategory === "Pricing" && <PricingManager data={pricingPlans} hsnData={hsnCodes} featuresData={pricingFeatures} onUpdate={setPricingPlans} refreshData={refreshCategoryData} />}
                 {activeCategory === "Features" && <FeatureManager data={pricingFeatures} plansData={pricingPlans} onUpdate={setPricingFeatures} refreshData={refreshCategoryData} onPlansUpdate={setPricingPlans} />}
                 {activeCategory === "Services" && <ServiceManager data={services} onUpdate={setServices} refreshData={refreshCategoryData} />}
-                {activeCategory === "Catalog" && <CatalogManager data={catalog} onUpdate={setCatalog} refreshData={refreshCategoryData} />}
+                {activeCategory === "Catalog" && <CatalogManager data={catalog} hsnData={hsnCodes} onUpdate={setCatalog} refreshData={refreshCategoryData} />}
                 {activeCategory === "Blogs" && <BlogManager data={posts} onUpdate={setPosts} refreshData={refreshCategoryData} />}
                 {activeCategory === "Milestones" && <MilestoneManager data={milestones} onUpdate={setMilestones} refreshData={refreshCategoryData} />}
                 {activeCategory === "Testimonials" && <TestimonialManager data={testimonials} onUpdate={setTestimonials} refreshData={refreshCategoryData} />}
@@ -1262,7 +1262,7 @@ function FeatureListManager({ features = [], globalFeatures = [], onChange, isVi
 }
 
 // 3. Pricing Manager
-function PricingManager({ data, featuresData, onUpdate, refreshData }) {
+function PricingManager({ data, hsnData, featuresData, onUpdate, refreshData }) {
     const [pricingData, setPricingData] = useState(Array.isArray(data) ? data : []);
 
     useEffect(() => {
@@ -1276,16 +1276,19 @@ function PricingManager({ data, featuresData, onUpdate, refreshData }) {
     const [durationValue, setDurationValue] = useState(1);
     const [durationUnit, setDurationUnit] = useState("month");
     const [features, setFeatures] = useState([]);
+    const [selectedHsn, setSelectedHsn] = useState("");
 
     useEffect(() => {
         if (currentPlan) {
             setDurationValue(currentPlan.durationValue || 1);
             setDurationUnit(currentPlan.durationUnit || "month");
             setFeatures(currentPlan.features || []);
+            setSelectedHsn(currentPlan.hsnCode ? String(currentPlan.hsnCode) : "");
         } else {
             setDurationValue(1);
             setDurationUnit("month");
             setFeatures([]);
+            setSelectedHsn("");
         }
     }, [currentPlan]);
 
@@ -1327,7 +1330,8 @@ function PricingManager({ data, featuresData, onUpdate, refreshData }) {
             order: Number(formData.get("order")) || 0,
             highlighted: formData.get("highlighted") === "on",
             planId: currentPlan && currentPlan.planId ? currentPlan.planId : (formData.get("name") || "").toLowerCase().replace(/\s+/g, '-'),
-            features: features
+            features: features,
+            hsnCode: selectedHsn || currentPlan?.hsnCode || ""
         };
 
         try {
@@ -1459,6 +1463,7 @@ function PricingManager({ data, featuresData, onUpdate, refreshData }) {
                                 <TableHead>Pricing</TableHead>
                                 <TableHead>Duration</TableHead>
                                 <TableHead>Status</TableHead>
+                                <TableHead>HSN/SAC</TableHead>
                                 <TableHead>Features</TableHead>
                                 <TableHead className="text-right">Actions</TableHead>
                             </TableRow>
@@ -1466,7 +1471,7 @@ function PricingManager({ data, featuresData, onUpdate, refreshData }) {
                         <TableBody>
                             {sortedPlans.length === 0 && (
                                 <TableRow>
-                                    <TableCell colSpan={6} className="h-32 text-center text-muted-foreground italic">
+                                    <TableCell colSpan={8} className="h-32 text-center text-muted-foreground italic">
                                         No pricing plans found.
                                     </TableCell>
                                 </TableRow>
@@ -1504,6 +1509,15 @@ function PricingManager({ data, featuresData, onUpdate, refreshData }) {
                                         <div className="flex gap-1.5 flex-wrap">
                                             {plan.highlighted && <Badge className="bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 border-amber-200/50 text-[10px] px-1.5 py-0">POPULAR</Badge>}
                                         </div>
+                                    </TableCell>
+                                    <TableCell>
+                                        {plan.hsnCode ? (
+                                            <Badge variant="outline" className="font-mono text-[10px] py-0 border-primary/20 text-primary/80 bg-primary/5">
+                                                {plan.hsnCode}
+                                            </Badge>
+                                        ) : (
+                                            <span className="text-[10px] text-muted-foreground italic">Not Set</span>
+                                        )}
                                     </TableCell>
                                     <TableCell>
                                         <div className="flex items-center gap-1.5">
@@ -1591,6 +1605,14 @@ function PricingManager({ data, featuresData, onUpdate, refreshData }) {
                                                     <p className="text-[10px] font-bold text-muted-foreground uppercase">Call to Action</p>
                                                     <p className="text-sm font-bold border-b pb-1">{currentPlan?.cta}</p>
                                                 </div>
+                                                <div className="space-y-1 pt-2">
+                                                    <p className="text-[10px] font-bold text-muted-foreground uppercase">HSN/SAC Code</p>
+                                                    {currentPlan?.hsnCode ? (
+                                                        <Badge variant="outline" className="font-mono text-[10px] py-0 border-primary/20 text-primary bg-primary/5">{currentPlan?.hsnCode}</Badge>
+                                                    ) : (
+                                                        <span className="text-[10px] text-destructive font-bold">NOT ASSIGNED</span>
+                                                    )}
+                                                </div>
                                                 <div className="pt-4 flex items-center gap-2">
                                                     <div className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />
                                                     <span className="text-[10px] font-bold uppercase text-muted-foreground">Active in Production</span>
@@ -1675,6 +1697,21 @@ function PricingManager({ data, featuresData, onUpdate, refreshData }) {
                                                         <p className="text-[10px] text-muted-foreground font-medium italic">Adds a glowing "Popular" tag in the pricing grid.</p>
                                                     </div>
                                                 </div>
+                                                <div className="space-y-2 pt-2">
+                                                    <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">HSN/SAC Code</Label>
+                                                    <Select value={selectedHsn} onValueChange={setSelectedHsn}>
+                                                        <SelectTrigger className="h-11 rounded-xl bg-background">
+                                                            <SelectValue placeholder="Select HSN Code" />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            {(hsnData || []).filter((hsn, i, arr) => arr.findIndex(h => h.hsnCode === hsn.hsnCode) === i).map((hsn, index) => (
+                                                                <SelectItem key={`pricing-hsn-${hsn._id || index}`} value={hsn.hsnCode}>
+                                                                    {hsn.hsnCode}
+                                                                </SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                    </Select>
+                                                </div>
                                             </CardContent>
                                         </Card>
                                     </div>
@@ -1709,7 +1746,7 @@ function PricingManager({ data, featuresData, onUpdate, refreshData }) {
 }
 
 // 4. Catalog Manager
-function CatalogManager({ data, onUpdate, refreshData }) {
+function CatalogManager({ data, hsnData, onUpdate, refreshData }) {
     const [services, setServices] = useState(Array.isArray(data) ? data : []);
 
     useEffect(() => {
@@ -1721,6 +1758,11 @@ function CatalogManager({ data, onUpdate, refreshData }) {
     const [currentService, setCurrentService] = useState(null);
     const [isViewMode, setIsViewMode] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const [selectedHsn, setSelectedHsn] = useState("");
+
+    useEffect(() => {
+        setSelectedHsn(currentService?.hsnCode ? String(currentService.hsnCode) : "");
+    }, [currentService]);
 
     const handleSave = async (e) => {
         e.preventDefault();
@@ -1735,7 +1777,8 @@ function CatalogManager({ data, onUpdate, refreshData }) {
             pricing: {
                 standard: formData.get("stdPrice") ? { price: Number(formData.get("stdPrice")), label: formData.get("stdLabel") } : null,
                 priority: formData.get("prioPrice") ? { price: Number(formData.get("prioPrice")), label: formData.get("prioLabel") } : null
-            }
+            },
+            hsnCode: selectedHsn || currentService?.hsnCode || ""
         };
 
         try {
@@ -1840,6 +1883,7 @@ function CatalogManager({ data, onUpdate, refreshData }) {
                                 </TableHead>
                                 <TableHead className="font-bold uppercase text-[11px] tracking-wider whitespace-nowrap">Standard</TableHead>
                                 <TableHead className="font-bold uppercase text-[11px] tracking-wider whitespace-nowrap">Priority (2 hr) </TableHead>
+                                <TableHead className="font-bold uppercase text-[11px] tracking-wider whitespace-nowrap">HSN/SAC</TableHead>
                                 <TableHead className="text-right font-bold uppercase text-[11px] tracking-wider whitespace-nowrap">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -1850,6 +1894,15 @@ function CatalogManager({ data, onUpdate, refreshData }) {
                                     <TableCell><Badge variant="outline">{s.category}</Badge></TableCell>
                                     <TableCell>{s.pricing?.standard ? `₹${s.pricing.standard.price}` : "-"}</TableCell>
                                     <TableCell>{s.pricing?.priority ? `₹${s.pricing.priority.price}` : "-"}</TableCell>
+                                    <TableCell>
+                                        {s.hsnCode ? (
+                                            <Badge variant="outline" className="font-mono text-[10px] py-0 border-primary/20 text-primary/80 bg-primary/5">
+                                                {s.hsnCode}
+                                            </Badge>
+                                        ) : (
+                                            <span className="text-[10px] text-muted-foreground italic">Not Set</span>
+                                        )}
+                                    </TableCell>
                                     <TableCell className="text-right">
                                         <Button variant="ghost" size="icon" onClick={() => { setCurrentService(s); setIsViewMode(true); setIsDialogOpen(true); }}><Eye className="w-4 h-4" /></Button>
                                         <Button variant="ghost" size="icon" onClick={() => { setCurrentService(s); setIsViewMode(false); setIsDialogOpen(true); }}><Edit className="w-4 h-4" /></Button>
@@ -1873,6 +1926,16 @@ function CatalogManager({ data, onUpdate, refreshData }) {
                                     <div><Label>Standard</Label><p className="text-xl font-bold">{currentService?.pricing?.standard ? `₹${currentService?.pricing.standard.price}` : "N/A"}</p><p className="text-xs text-muted-foreground">{currentService?.pricing?.standard?.label}</p></div>
                                     <div><Label>Priority</Label><p className="text-xl font-bold text-amber-600">{currentService?.pricing?.priority ? `₹${currentService?.pricing.priority.price}` : "N/A"}</p><p className="text-xs text-muted-foreground">{currentService?.pricing?.priority?.label}</p></div>
                                 </div>
+                                <div className="pt-2">
+                                    <Label className="text-[10px] font-bold uppercase text-muted-foreground">HSN/SAC Code</Label>
+                                    <div className="mt-1">
+                                        {currentService?.hsnCode ? (
+                                            <Badge variant="outline" className="font-mono border-primary/20 text-primary bg-primary/5">{currentService?.hsnCode}</Badge>
+                                        ) : (
+                                            <span className="text-[10px] text-destructive font-bold uppercase tracking-wider">Not Assigned</span>
+                                        )}
+                                    </div>
+                                </div>
                             </div>
                         ) : (
                             <form id="catalog-form" onSubmit={handleSave} className="space-y-4">
@@ -1881,6 +1944,21 @@ function CatalogManager({ data, onUpdate, refreshData }) {
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2"><Label>Standard Price</Label><Input type="number" name="stdPrice" defaultValue={currentService?.pricing?.standard?.price} /><Input name="stdLabel" defaultValue={currentService?.pricing?.standard?.label || "Detailed"} placeholder="Label" /></div>
                                     <div className="space-y-2"><Label>Priority Price</Label><Input type="number" name="prioPrice" defaultValue={currentService?.pricing?.priority?.price} /><Input name="prioLabel" defaultValue={currentService?.pricing?.priority?.label || "Within 2 Hours"} placeholder="Label" /></div>
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label>HSN/SAC Code</Label>
+                                    <Select value={selectedHsn} onValueChange={setSelectedHsn}>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Select HSN Code" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {(hsnData || []).filter((hsn, i, arr) => arr.findIndex(h => h.hsnCode === hsn.hsnCode) === i).map((hsn, index) => (
+                                                <SelectItem key={`catalog-hsn-${hsn._id || index}`} value={hsn.hsnCode}>
+                                                    {hsn.hsnCode}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
                                 </div>
                             </form>
                         )}

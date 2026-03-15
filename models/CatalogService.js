@@ -13,7 +13,8 @@ const CatalogServiceSchema = new mongoose.Schema({
             price: { type: Number },
             label: { type: String }
         }
-    }
+    },
+    hsnCode: { type: String }
 }, { timestamps: true });
 
 export default mongoose.models.CatalogService || mongoose.model('CatalogService', CatalogServiceSchema);

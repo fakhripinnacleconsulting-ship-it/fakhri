@@ -29,7 +29,8 @@ export default function Within2HoursPricingList({ services, pageInfo, noticeCont
             price: service.price,
             category: service.category,
             quantity: quantity,
-            type: 'priority'
+            type: 'priority',
+            hsnCode: service.hsnCode || '998311'
         });
     };
 

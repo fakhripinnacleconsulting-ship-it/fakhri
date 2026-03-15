@@ -23,6 +23,7 @@ const PricingPlanSchema = new mongoose.Schema({
         value: { type: mongoose.Schema.Types.Mixed },
         included: { type: Boolean }
     }],
+    hsnCode: { type: String },
     order: { type: Number, default: 0 }
 }, { timestamps: true });
 
