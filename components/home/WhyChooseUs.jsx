@@ -15,14 +15,8 @@ const iconMap = {
     Trophy
 };
 
-const defaultStats = [
-    { value: "500+", label: "Sellers Trusted" },
-    { value: "8+", label: "Years Experience" },
-    { value: "25+", label: "Expert Team" }
-];
-
 export default function WhyChooseUs({ company }) {
-    const stats = (company?.stats && company.stats.length > 0) ? company.stats : defaultStats;
+    const stats = (company?.stats && company.stats.length > 0) ? company.stats : [];
 
     const expStat = stats.find(s => s.label?.toLowerCase().includes('experience'))?.value || "8+";
     const teamStat = stats.find(s => s.label?.toLowerCase().includes('team'))?.value || "25+";
@@ -68,7 +62,7 @@ export default function WhyChooseUs({ company }) {
                     <ScrollReveal direction="right">
                         <div className="relative h-[400px] lg:h-[500px] rounded-3xl overflow-hidden shadow-2xl group">
                             <Image
-                                src="https://images.unsplash.com/photo-1552664730-d307ca884978?q=80&w=2070&auto=format&fit=crop"
+                                src={company?.aboutImage || "https://images.unsplash.com/photo-1552664730-d307ca884978?q=80&w=2070&auto=format&fit=crop"}
                                 alt="Fakhri IT Services Team Collaboration"
                                 fill
                                 className="object-cover transition-transform duration-700 group-hover:scale-105"

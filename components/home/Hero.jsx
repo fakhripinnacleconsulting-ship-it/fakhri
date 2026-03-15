@@ -23,12 +23,7 @@ export default function Hero({ company }) {
         setIsMobile(window.innerWidth < 768);
     }, []);
 
-    const stats = company?.stats || [
-        { value: "500+", label: "Sellers Trusted" },
-        { value: "8+", label: "Years Experience" },
-        { value: "25+", label: "Expert Team" },
-        { value: "$50M+", label: "Client Revenue" }
-    ];
+    const stats = company?.stats || [];
 
     return (
         <section className="relative min-h-[75vh] flex items-center overflow-hidden bg-background">
@@ -82,7 +77,7 @@ export default function Hero({ company }) {
                                 </span>
                             </Link>
 
-                            <span className="badge-outline">Since {company?.established || '2016'}</span>
+                            <span className="badge-outline">Since {company?.established}</span>
                         </motion.div>
 
                         {/* Headline */}
@@ -92,7 +87,7 @@ export default function Hero({ company }) {
                             transition={{ duration: 0.6, delay: 0.1 }}
                             className="heading-xl mb-6"
                         >
-                            {company?.tagline || "Your No.1 Growth Partner for Amazon Success"}
+                            {company?.tagline}
                         </motion.h1>
 
                         {/* Description */}
@@ -102,7 +97,7 @@ export default function Hero({ company }) {
                             transition={{ duration: 0.6, delay: 0.2 }}
                             className="body-lg mb-8 max-w-xl"
                         >
-                            {company?.description || 'Your trusted Amazon seller services partner. Expert account management, FBA operations, PPC advertising, and growth strategies for Amazon sellers.'}
+                            {company?.description}
                         </motion.p>
 
                         {/* CTAs */}

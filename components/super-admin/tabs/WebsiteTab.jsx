@@ -1,7 +1,8 @@
 "use client";
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
-import { Plus, Search, Edit, Trash2, Save, X, ChevronRight, FileText, MessageSquare, HelpCircle, Briefcase, Building, Users, DollarSign, List, Shield, Eye, RefreshCw, Check, GripVertical, Loader2, ChevronsUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { Plus, Search, Edit, Trash2, Save, X, ChevronRight, FileText, MessageSquare, HelpCircle, Briefcase, Building, Users, DollarSign, List, Shield, Eye, RefreshCw, Check, GripVertical, Loader2, ChevronsUpDown, ArrowUp, ArrowDown, Globe, Share2, Target, Heart, Zap, Award, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -348,19 +349,29 @@ export default function WebsiteTab() {
             </div>
 
             <div className="min-h-[500px]">
-                {activeCategory === "Company" && <CompanyManager data={companyInfo} onUpdate={setCompanyInfo} refreshData={refreshCategoryData} />}
-                {activeCategory === "Team" && <TeamManager data={members} onUpdate={setMembers} refreshData={refreshCategoryData} />}
-                {activeCategory === "Pricing" && <PricingManager data={pricingPlans} hsnData={hsnCodes} featuresData={pricingFeatures} onUpdate={setPricingPlans} refreshData={refreshCategoryData} />}
-                {activeCategory === "Features" && <FeatureManager data={pricingFeatures} plansData={pricingPlans} onUpdate={setPricingFeatures} refreshData={refreshCategoryData} onPlansUpdate={setPricingPlans} />}
-                {activeCategory === "Services" && <ServiceManager data={services} onUpdate={setServices} refreshData={refreshCategoryData} />}
-                {activeCategory === "Catalog" && <CatalogManager data={catalog} hsnData={hsnCodes} onUpdate={setCatalog} refreshData={refreshCategoryData} />}
-                {activeCategory === "Blogs" && <BlogManager data={posts} onUpdate={setPosts} refreshData={refreshCategoryData} />}
-                {activeCategory === "Milestones" && <MilestoneManager data={milestones} onUpdate={setMilestones} refreshData={refreshCategoryData} />}
-                {activeCategory === "Testimonials" && <TestimonialManager data={testimonials} onUpdate={setTestimonials} refreshData={refreshCategoryData} />}
-                {activeCategory === "FAQs" && <FAQManager data={faqs} onUpdate={setFaqs} refreshData={refreshCategoryData} />}
-                {activeCategory === "Jobs" && <JobManager data={jobs} onUpdate={setJobs} refreshData={refreshCategoryData} />}
-                {activeCategory === "HSN" && <HSNManager data={hsnCodes} onUpdate={setHsnCodes} refreshData={refreshCategoryData} />}
-                {activeCategory === "Legal" && <LegalManager />}
+                <AnimatePresence mode="wait">
+                    <motion.div
+                        key={activeCategory}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        transition={{ duration: 0.3, ease: "easeInOut" }}
+                    >
+                        {activeCategory === "Company" && <CompanyManager data={companyInfo} onUpdate={setCompanyInfo} refreshData={refreshCategoryData} />}
+                        {activeCategory === "Team" && <TeamManager data={members} onUpdate={setMembers} refreshData={refreshCategoryData} />}
+                        {activeCategory === "Pricing" && <PricingManager data={pricingPlans} hsnData={hsnCodes} featuresData={pricingFeatures} onUpdate={setPricingPlans} refreshData={refreshCategoryData} />}
+                        {activeCategory === "Features" && <FeatureManager data={pricingFeatures} plansData={pricingPlans} onUpdate={setPricingFeatures} refreshData={refreshCategoryData} onPlansUpdate={setPricingPlans} />}
+                        {activeCategory === "Services" && <ServiceManager data={services} onUpdate={setServices} refreshData={refreshCategoryData} />}
+                        {activeCategory === "Catalog" && <CatalogManager data={catalog} hsnData={hsnCodes} onUpdate={setCatalog} refreshData={refreshCategoryData} />}
+                        {activeCategory === "Blogs" && <BlogManager data={posts} onUpdate={setPosts} refreshData={refreshCategoryData} />}
+                        {activeCategory === "Milestones" && <MilestoneManager data={milestones} onUpdate={setMilestones} refreshData={refreshCategoryData} />}
+                        {activeCategory === "Testimonials" && <TestimonialManager data={testimonials} onUpdate={setTestimonials} refreshData={refreshCategoryData} />}
+                        {activeCategory === "FAQs" && <FAQManager data={faqs} onUpdate={setFaqs} refreshData={refreshCategoryData} />}
+                        {activeCategory === "Jobs" && <JobManager data={jobs} onUpdate={setJobs} refreshData={refreshCategoryData} />}
+                        {activeCategory === "HSN" && <HSNManager data={hsnCodes} onUpdate={setHsnCodes} refreshData={refreshCategoryData} />}
+                        {activeCategory === "Legal" && <LegalManager />}
+                    </motion.div>
+                </AnimatePresence>
             </div>
         </div>
     );
@@ -481,7 +492,7 @@ function ObjectArrayInput({ values = [], onChange, label, fields }) {
     );
 }
 
-// 1. Company Manager
+// 1. Company Manager (Refactored for Industry-Level UI/UX)
 function CompanyManager({ data, onUpdate, refreshData }) {
     const [formData, setFormData] = useState(data || {
         name: "", tagline: "", established: "", description: "", logo: "",
@@ -490,10 +501,14 @@ function CompanyManager({ data, onUpdate, refreshData }) {
         badges: [], stats: [], culture: { title: "", values: [] }, partners: [], whyChooseUs: []
     });
 
+    const [editingSection, setEditingSection] = useState(null);
+    const [isSaving, setIsSaving] = useState(false);
+
     useEffect(() => {
         if (data && Object.keys(data).length > 0) {
             setFormData({
                 ...data,
+                contact: data.contact || { phone: {}, email: {}, address: {}, social: {} },
                 story: data.story || { title: "", content: "", highlights: [] },
                 badges: data.badges || [],
                 stats: data.stats || [],
@@ -504,23 +519,16 @@ function CompanyManager({ data, onUpdate, refreshData }) {
         }
     }, [data]);
 
-    const [isSaving, setIsSaving] = useState(false);
-
-    const handleChange = (section, field, value) => {
-        if (section) {
-            setFormData(prev => ({ ...prev, [section]: { ...prev[section], [field]: value } }));
-        } else {
-            setFormData(prev => ({ ...prev, [field]: value }));
-        }
-    };
-
-    const handleSave = async () => {
+    const handleSave = async (updatedData = formData) => {
         setIsSaving(true);
         try {
-            const updated = await updateCompanyData(formData);
+            const finalData = { ...formData, ...updatedData };
+            const updated = await updateCompanyData(finalData);
             if (updated) {
+                setFormData(updated);
                 onUpdate(updated);
-                toast.success("Company information updated successfully");
+                toast.success("Section updated successfully");
+                setEditingSection(null);
             } else {
                 toast.error("Failed to update company information");
             }
@@ -531,160 +539,492 @@ function CompanyManager({ data, onUpdate, refreshData }) {
         }
     };
 
+    const sections = [
+        { id: 'identity', title: 'Identity & Branding', icon: Building, description: 'Logo, tagline, and brand bio.', color: 'text-blue-500', bg: 'bg-blue-500/10' },
+        { id: 'contact', title: 'Global Reach', icon: Globe, description: 'Contact info, address, and social presence.', color: 'text-purple-500', bg: 'bg-purple-500/10' },
+        { id: 'purpose', title: 'Mission & Vision', icon: Target, description: 'Core purpose and future vision.', color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+        { id: 'authority', title: 'Trust & Authority', icon: Award, description: 'Badges, stats, and achievements.', color: 'text-amber-500', bg: 'bg-amber-500/10' },
+        { id: 'narrative', title: 'Brand Narrative', icon: FileText, description: 'Our story and key highlights.', color: 'text-rose-500', bg: 'bg-rose-500/10' },
+        { id: 'culture', title: 'Culture & Values', icon: Heart, description: 'Core principles and company culture.', color: 'text-pink-500', bg: 'bg-pink-500/10' },
+        { id: 'edge', title: 'Competitive Edge', icon: Zap, description: 'Why Choose Us and core reasons.', color: 'text-indigo-500', bg: 'bg-indigo-500/10' },
+        { id: 'partners', title: 'Strategic Network', icon: Share2, description: 'Partner brands and ecosystem.', color: 'text-slate-500', bg: 'bg-slate-500/10' },
+    ];
+
+    const containerVariants = {
+        hidden: { opacity: 0 },
+        visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
+    };
+
+    const itemVariants = {
+        hidden: { y: 20, opacity: 0 },
+        visible: { y: 0, opacity: 1 }
+    };
+
     return (
-        <div className="space-y-6 animate-in fade-in">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-card p-4 rounded-lg border shadow-sm sticky top-16 z-30">
-                <div>
-                    <h3 className="text-lg font-semibold">Company Profile</h3>
-                    <p className="text-sm text-muted-foreground">Manage your brand identity, contact info, and core messaging.</p>
+        <div className="space-y-8 pb-12">
+            {/* Header Section */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-card/40 backdrop-blur-xl p-6 rounded-3xl border shadow-xl shadow-primary/5">
+                <div className="flex items-center gap-5">
+                    <div className="relative group">
+                        <div className="absolute -inset-1 bg-gradient-to-r from-primary to-primary/50 rounded-2xl blur opacity-25 group-hover:opacity-40 transition duration-1000"></div>
+                        <div className="relative h-20 w-20 rounded-2xl bg-background border flex items-center justify-center overflow-hidden shadow-inner">
+                            {formData.logo ? (
+                                <img src={formData.logo} alt="Logo" className="h-full w-full object-contain p-2" />
+                            ) : (
+                                <Building className="h-8 w-8 text-muted-foreground/50" />
+                            )}
+                        </div>
+                    </div>
+                    <div>
+                        <h3 className="text-2xl font-bold tracking-tight">{formData.name || "Company Profile"}</h3>
+                        <p className="text-muted-foreground font-medium flex items-center gap-2">
+                            <span className="h-1.5 w-1.5 rounded-full bg-primary"></span>
+                            Established in {formData.established || "20XX"}
+                        </p>
+                        <div className="mt-2 text-xs font-semibold uppercase tracking-widest text-primary/70 flex items-center gap-3">
+                            <span>Global CMS Control</span>
+                            <span className="h-1 w-1 rounded-full bg-border"></span>
+                            <span>v2.0 Architecture</span>
+                        </div>
+                    </div>
                 </div>
-                <div className="flex gap-2">
-                    <Button variant="outline" size="sm" onClick={() => refreshData()} title="Refresh Data">
+                <div className="flex flex-wrap gap-3">
+                    <Button variant="outline" size="lg" className="rounded-xl border-primary/20 hover:bg-primary/5 transition-all shadow-sm" onClick={() => refreshData()}>
                         <RefreshCw className="w-4 h-4 mr-2" />
-                        Refresh
+                        Sync Data
                     </Button>
-                    <Button onClick={handleSave} disabled={isSaving}>
-                        {isSaving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                        <Save className="w-4 h-4 mr-2" />
-                        Save Changes
-                    </Button>
+                    {/* <Button variant="default" size="lg" className="rounded-xl shadow-lg shadow-primary/20 px-6" onClick={() => toast.info("Select a section to edit below")}>
+                        <ExternalLink className="w-4 h-4 mr-2" />
+                        Live Preview
+                    </Button> */}
                 </div>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-6">
-                <Card>
-                    <CardHeader><CardTitle>General Info</CardTitle></CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="grid gap-2">
-                            <ImagePicker
-                                name="logo"
-                                label="Company Logo"
-                                value={formData.logo}
-                                onChange={(val) => handleChange(null, 'logo', val)}
-                            />
+            {/* Dashboard Grid */}
+            <motion.div
+                variants={containerVariants}
+                initial="hidden"
+                animate="visible"
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5"
+            >
+                {sections.map((section) => (
+                    <motion.div
+                        key={section.id}
+                        variants={itemVariants}
+                        whileHover={{ y: -5, transition: { duration: 0.2 } }}
+                        onClick={() => setEditingSection(section.id)}
+                        className="group cursor-pointer bg-card hover:bg-accent/40 transition-all duration-300 p-6 rounded-3xl border border-border shadow-sm hover:shadow-xl hover:shadow-primary/5 relative overflow-hidden"
+                    >
+                        <div className={`absolute top-0 right-0 w-24 h-24 ${section.bg} rounded-bl-full -mr-12 -mt-12 transition-transform group-hover:scale-125 duration-500`}></div>
+
+                        <div className="relative z-10 flex flex-col h-full">
+                            <div className={`${section.bg} ${section.color} p-3 rounded-2xl w-fit mb-4 shadow-sm`}>
+                                <section.icon className="h-6 w-6" />
+                            </div>
+                            <h4 className="font-bold text-lg mb-1">{section.title}</h4>
+                            <p className="text-sm text-muted-foreground line-clamp-2 mb-4 leading-relaxed">
+                                {section.description}
+                            </p>
+                            <div className="mt-auto flex items-center justify-between text-xs font-bold uppercase tracking-wider text-primary/60">
+                                <span>Configure</span>
+                                <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                            </div>
                         </div>
-                        <div className="grid gap-2"><Label>Company Name</Label><Input value={formData.name} onChange={(e) => handleChange(null, 'name', e.target.value)} /></div>
-                        <div className="grid gap-2"><Label>Tagline</Label><Input value={formData.tagline} onChange={(e) => handleChange(null, 'tagline', e.target.value)} /></div>
-                        <div className="grid gap-2"><Label>Established Year</Label><Input value={formData.established} onChange={(e) => handleChange(null, 'established', e.target.value)} /></div>
-                        <div className="grid gap-2"><Label>Description</Label><Textarea value={formData.description} onChange={(e) => handleChange(null, 'description', e.target.value)} rows={4} /></div>
-                    </CardContent>
-                </Card>
+                    </motion.div>
+                ))}
+            </motion.div>
 
-                <Card>
-                    <CardHeader><CardTitle>Contact Details</CardTitle></CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="grid grid-cols-3 gap-4">
-                            <div className="grid gap-2"><Label>Primary Phone</Label><Input value={formData.contact?.phone?.primary} onChange={(e) => handleChange('contact', 'phone', { ...formData.contact.phone, primary: e.target.value })} /></div>
-                            <div className="grid gap-2"><Label>Secondary Phone</Label><Input value={formData.contact?.phone?.secondary} onChange={(e) => handleChange('contact', 'phone', { ...formData.contact.phone, secondary: e.target.value })} /></div>
-                            <div className="grid gap-2"><Label>WhatsApp Number</Label><Input value={formData.contact?.phone?.whatsapp} onChange={(e) => handleChange('contact', 'phone', { ...formData.contact.phone, whatsapp: e.target.value })} placeholder="e.g. 919584426543" /></div>
+            {/* Section Summary Cards (Quick View) */}
+            <div className="grid md:grid-cols-2 gap-6 mt-4">
+                <Card className="rounded-3xl border-primary/5 shadow-md overflow-hidden bg-gradient-to-br from-background to-accent/20">
+                    <CardHeader className="pb-2">
+                        <div className="flex items-center justify-between">
+                            <CardTitle className="text-sm uppercase tracking-widest font-bold text-muted-foreground flex items-center gap-2">
+                                <span className="h-2 w-2 rounded-full bg-emerald-500"></span>
+                                Active Brand Bio
+                            </CardTitle>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={() => setEditingSection('identity')}>
+                                <Edit className="h-4 w-4" />
+                            </Button>
                         </div>
-                        <div className="grid grid-cols-3 gap-4">
-                            <div className="grid gap-2"><Label>Info Email</Label><Input value={formData.contact?.email?.info} onChange={(e) => handleChange('contact', 'email', { ...formData.contact.email, info: e.target.value })} /></div>
-                            <div className="grid gap-2"><Label>Support Email</Label><Input value={formData.contact?.email?.support} onChange={(e) => handleChange('contact', 'email', { ...formData.contact.email, support: e.target.value })} /></div>
-                            <div className="grid gap-2"><Label>General Email</Label><Input value={formData.contact?.email?.general} onChange={(e) => handleChange('contact', 'email', { ...formData.contact.email, general: e.target.value })} /></div>
+                    </CardHeader>
+                    <CardContent>
+                        <p className="text-sm leading-relaxed italic text-muted-foreground/80">
+                            "{formData.description || "No description provided yet. This is your primary brand story shown on the homepage and about page."}"
+                        </p>
+                    </CardContent>
+                </Card>
+
+                <Card className="rounded-3xl border-primary/5 shadow-md overflow-hidden bg-gradient-to-br from-background to-accent/20">
+                    <CardHeader className="pb-2">
+                        <div className="flex items-center justify-between">
+                            <CardTitle className="text-sm uppercase tracking-widest font-bold text-muted-foreground flex items-center gap-2">
+                                <span className="h-2 w-2 rounded-full bg-indigo-500"></span>
+                                Primary Contact
+                            </CardTitle>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={() => setEditingSection('contact')}>
+                                <Edit className="h-4 w-4" />
+                            </Button>
                         </div>
-                        <div className="grid gap-2"><Label>Full Address</Label><Textarea value={formData.contact?.address?.full} onChange={(e) => handleChange('contact', 'address', { ...formData.contact.address, full: e.target.value })} /></div>
-                        <div className="grid grid-cols-2 gap-4 pt-2 border-t">
-                            <div className="grid gap-2"><Label>LinkedIn</Label><Input value={formData.contact?.social?.linkedin} onChange={(e) => handleChange('contact', 'social', { ...formData.contact.social, linkedin: e.target.value })} /></div>
-                            <div className="grid gap-2"><Label>Instagram</Label><Input value={formData.contact?.social?.instagram} onChange={(e) => handleChange('contact', 'social', { ...formData.contact.social, instagram: e.target.value })} /></div>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div className="flex items-center gap-3">
+                            <div className="h-8 w-8 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-500">
+                                <Globe className="h-4 w-4" />
+                            </div>
+                            <div className="text-xs">
+                                <p className="font-bold">{formData.contact?.phone?.primary || "N/A"}</p>
+                                <p className="text-muted-foreground">{formData.contact?.email?.info || "N/A"}</p>
+                            </div>
                         </div>
-                    </CardContent>
-                </Card>
-
-                <Card className="md:col-span-2">
-                    <CardHeader><CardTitle>Trust & Authority (Badges & Stats)</CardTitle></CardHeader>
-                    <CardContent className="grid md:grid-cols-2 gap-6">
-                        <ObjectArrayInput
-                            label="Trust Badges"
-                            values={formData.badges}
-                            onChange={(val) => handleChange(null, 'badges', val)}
-                            fields={[
-                                { name: 'title', label: 'Badge Title', placeholder: 'e.g. Amazon Gold Partner' },
-                                { name: 'subtitle', label: 'Subtitle/Detail', placeholder: 'e.g. Strategic Provider Network' },
-                            ]}
-                        />
-                        <ObjectArrayInput
-                            label="Company Stats"
-                            values={formData.stats}
-                            onChange={(val) => handleChange(null, 'stats', val)}
-                            fields={[
-                                { name: 'value', label: 'Value', placeholder: 'e.g. 500+' },
-                                { name: 'label', label: 'Label', placeholder: 'e.g. Happy Clients' },
-                                { name: 'description', label: 'Description', placeholder: 'e.g. Trusted by leading brands', fullWidth: true },
-                            ]}
-                        />
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader><CardTitle>Mission & Vision</CardTitle></CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="grid gap-2"><Label>Mission</Label><Textarea value={formData.mission} onChange={(e) => handleChange(null, 'mission', e.target.value)} rows={3} /></div>
-                        <div className="grid gap-2"><Label>Vision</Label><Textarea value={formData.vision} onChange={(e) => handleChange(null, 'vision', e.target.value)} rows={3} /></div>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader><CardTitle>Our Story</CardTitle></CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="grid gap-2"><Label>Story Title</Label><Input value={formData.story?.title} onChange={(e) => handleChange('story', 'title', e.target.value)} /></div>
-                        <div className="grid gap-2"><Label>Story Content</Label><Textarea value={formData.story?.content} onChange={(e) => handleChange('story', 'content', e.target.value)} rows={4} /></div>
-                        <ArrayInput
-                            label="Story Highlights"
-                            values={formData.story?.highlights || []}
-                            onChange={(val) => handleChange('story', 'highlights', val)}
-                            placeholder="Add a key highlight..."
-                        />
-                    </CardContent>
-                </Card>
-
-                <Card className="md:col-span-2">
-                    <CardHeader><CardTitle>Culture & Values</CardTitle></CardHeader>
-                    <CardContent className="space-y-6">
-                        <div className="grid gap-2"><Label>Section Title</Label><Input value={formData.culture?.title} onChange={(e) => handleChange('culture', 'title', e.target.value)} placeholder="e.g. Our Core Values" className="max-w-md" /></div>
-                        <ObjectArrayInput
-                            label="Core Values"
-                            values={formData.culture?.values}
-                            onChange={(val) => handleChange('culture', 'values', val)}
-                            fields={[
-                                { name: 'title', label: 'Value Name', placeholder: 'e.g. Excellence' },
-                                { name: 'description', label: 'Description', placeholder: 'e.g. We strive for perfection...', fullWidth: true },
-                            ]}
-                        />
-                    </CardContent>
-                </Card>
-
-                <Card className="md:col-span-2">
-                    <CardHeader><CardTitle>Why Choose Us (Core Reasons)</CardTitle></CardHeader>
-                    <CardContent className="space-y-6">
-                        <ObjectArrayInput
-                            label="Why Choose Us"
-                            values={formData.whyChooseUs}
-                            onChange={(val) => handleChange(null, 'whyChooseUs', val)}
-                            fields={[
-                                { name: 'title', label: 'Point Title', placeholder: 'e.g. Dedicated Account Managers' },
-                                { name: 'description', label: 'Short Description', placeholder: 'e.g. Personalized attention with a single point...', fullWidth: true },
-                                { name: 'icon', label: 'Icon (Lucide)', type: 'icon', placeholder: 'Select Icon' }
-                            ]}
-                        />
-                    </CardContent>
-                </Card>
-
-                <Card className="md:col-span-2">
-                    <CardHeader><CardTitle>Partners & Brands</CardTitle></CardHeader>
-                    <CardContent className="space-y-6">
-                        <ObjectArrayInput
-                            label="Partners"
-                            values={formData.partners}
-                            onChange={(val) => handleChange(null, 'partners', val)}
-                            fields={[
-                                { name: 'name', label: 'Partner/Brand Name', placeholder: 'e.g. Google' },
-                                { name: 'logo', label: 'Company Logo', type: 'image', fullWidth: true }
-                            ]}
-                        />
                     </CardContent>
                 </Card>
             </div>
+
+            {/* Dynamic Dialog for Editing */}
+            <Dialog open={!!editingSection} onOpenChange={(open) => !open && setEditingSection(null)}>
+                <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col p-0 gap-0 rounded-[2rem] border-primary/20 shadow-2xl">
+                    <DialogHeader className="p-8 bg-gradient-to-r from-background via-background to-primary/5 border-b shrink-0">
+                        <div className="flex items-center gap-4">
+                            <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shadow-sm">
+                                {editingSection && sections.find(s => s.id === editingSection)?.icon && (
+                                    (() => {
+                                        const Icon = sections.find(s => s.id === editingSection).icon;
+                                        return <Icon className="h-6 w-6" />;
+                                    })()
+                                )}
+                            </div>
+                            <div>
+                                <DialogTitle className="text-2xl font-bold tracking-tight">
+                                    {sections.find(s => s.id === editingSection)?.title}
+                                </DialogTitle>
+                                <DialogDescription className="text-base font-medium">
+                                    {sections.find(s => s.id === editingSection)?.description}
+                                </DialogDescription>
+                            </div>
+                        </div>
+                    </DialogHeader>
+
+                    <ScrollableContainer className="flex-1 min-h-0">
+                            <AnimatePresence mode="wait">
+                                <motion.div
+                                    key={editingSection}
+                                    initial={{ opacity: 0, x: 10 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: -10 }}
+                                    transition={{ duration: 0.2 }}
+                                    className="space-y-8 p-8"
+                                >
+                                    {editingSection === 'identity' && (
+                                        <div className="space-y-6">
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                <div className="space-y-6">
+                                                    <div className="grid gap-3">
+                                                        <Label className="text-sm font-bold uppercase tracking-wider">Company Name</Label>
+                                                        <Input
+                                                            className="h-12 px-4 rounded-xl border-primary/10 bg-muted/20 focus:bg-background transition-all"
+                                                            value={formData.name}
+                                                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                                        />
+                                                    </div>
+                                                    <div className="grid gap-3">
+                                                        <Label className="text-sm font-bold uppercase tracking-wider">Tagline</Label>
+                                                        <Input
+                                                            className="h-12 px-4 rounded-xl border-primary/10 bg-muted/20 focus:bg-background transition-all"
+                                                            value={formData.tagline}
+                                                            onChange={(e) => setFormData({ ...formData, tagline: e.target.value })}
+                                                        />
+                                                    </div>
+                                                    <div className="grid gap-3">
+                                                        <Label className="text-sm font-bold uppercase tracking-wider">Established Year</Label>
+                                                        <Input
+                                                            className="h-12 px-4 rounded-xl border-primary/10 bg-muted/20 focus:bg-background transition-all"
+                                                            value={formData.established}
+                                                            onChange={(e) => setFormData({ ...formData, established: e.target.value })}
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <div className="space-y-4">
+                                                    <Label className="text-sm font-bold uppercase tracking-wider">Brand Logo</Label>
+                                                    <div className="p-1 rounded-[2rem] bg-gradient-to-br from-primary/10 to-transparent">
+                                                        <ImagePicker
+                                                            name="logo"
+                                                            value={formData.logo}
+                                                            onChange={(val) => setFormData({ ...formData, logo: val })}
+                                                            className="rounded-[1.8rem]"
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <div className="space-y-4">
+                                                    <Label className="text-sm font-bold uppercase tracking-wider">About Section Image</Label>
+                                                    <div className="p-1 rounded-[2rem] bg-gradient-to-br from-primary/10 to-transparent">
+                                                        <ImagePicker
+                                                            name="aboutImage"
+                                                            value={formData.aboutImage}
+                                                            onChange={(val) => setFormData({ ...formData, aboutImage: val })}
+                                                            className="rounded-[1.8rem]"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="grid gap-3">
+                                                <Label className="text-sm font-bold uppercase tracking-wider">Comprehensive Bio / Description</Label>
+                                                <Textarea
+                                                    className="min-h-[160px] p-4 rounded-2xl border-primary/10 bg-muted/20 focus:bg-background transition-all leading-relaxed"
+                                                    value={formData.description}
+                                                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                                    placeholder="Enter a detailed company overview..."
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {editingSection === 'contact' && (
+                                        <div className="space-y-8">
+                                            <div className="grid md:grid-cols-2 gap-8">
+                                                <div className="space-y-6">
+                                                    <h4 className="font-bold flex items-center gap-2 text-primary">
+                                                        <Globe className="h-4 w-4" /> Phone Channels
+                                                    </h4>
+                                                    <div className="grid grid-cols-2 gap-4">
+                                                        <div className="grid gap-2">
+                                                            <Label className="text-xs font-bold text-muted-foreground uppercase">Primary Line</Label>
+                                                            <Input value={formData.contact?.phone?.primary} onChange={(e) => setFormData({ ...formData, contact: { ...formData.contact, phone: { ...formData.contact.phone, primary: e.target.value } } })} className="rounded-xl" />
+                                                        </div>
+                                                        <div className="grid gap-2">
+                                                            <Label className="text-xs font-bold text-muted-foreground uppercase">Secondary Line</Label>
+                                                            <Input value={formData.contact?.phone?.secondary} onChange={(e) => setFormData({ ...formData, contact: { ...formData.contact, phone: { ...formData.contact.phone, secondary: e.target.value } } })} className="rounded-xl" />
+                                                        </div>
+                                                        <div className="grid gap-2 col-span-2">
+                                                            <Label className="text-xs font-bold text-muted-foreground uppercase">WhatsApp Number</Label>
+                                                            <Input value={formData.contact?.phone?.whatsapp} onChange={(e) => setFormData({ ...formData, contact: { ...formData.contact, phone: { ...formData.contact.phone, whatsapp: e.target.value } } })} className="rounded-xl" placeholder="e.g. 919584426543" />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div className="space-y-6">
+                                                    <h4 className="font-bold flex items-center gap-2 text-primary">
+                                                        <MessageSquare className="h-4 w-4" /> Email Hubs
+                                                    </h4>
+                                                    <div className="space-y-4">
+                                                        <div className="grid gap-2">
+                                                            <Label className="text-xs font-bold text-muted-foreground uppercase">Information Desk</Label>
+                                                            <Input value={formData.contact?.email?.info} onChange={(e) => setFormData({ ...formData, contact: { ...formData.contact, email: { ...formData.contact.email, info: e.target.value } } })} className="rounded-xl" />
+                                                        </div>
+                                                        <div className="grid gap-2">
+                                                            <Label className="text-xs font-bold text-muted-foreground uppercase">Support Center</Label>
+                                                            <Input value={formData.contact?.email?.support} onChange={(e) => setFormData({ ...formData, contact: { ...formData.contact, email: { ...formData.contact.email, support: e.target.value } } })} className="rounded-xl" />
+                                                        </div>
+                                                        <div className="grid gap-2">
+                                                            <Label className="text-xs font-bold text-muted-foreground uppercase">General Inquiries</Label>
+                                                            <Input value={formData.contact?.email?.general} onChange={(e) => setFormData({ ...formData, contact: { ...formData.contact, email: { ...formData.contact.email, general: e.target.value } } })} className="rounded-xl" />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="space-y-4 pt-4 border-t">
+                                                <h4 className="font-bold flex items-center gap-2 text-primary">
+                                                    <Building className="h-4 w-4" /> Headquarters Address
+                                                </h4>
+                                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                                    <div className="grid gap-2 md:col-span-2">
+                                                        <Label className="text-xs font-bold text-muted-foreground uppercase">Street / Landmark</Label>
+                                                        <Input value={formData.contact?.address?.street} onChange={(e) => setFormData({ ...formData, contact: { ...formData.contact, address: { ...formData.contact.address, street: e.target.value } } })} className="rounded-xl" />
+                                                    </div>
+                                                    <div className="grid gap-2">
+                                                        <Label className="text-xs font-bold text-muted-foreground uppercase">City</Label>
+                                                        <Input value={formData.contact?.address?.city} onChange={(e) => setFormData({ ...formData, contact: { ...formData.contact, address: { ...formData.contact.address, city: e.target.value } } })} className="rounded-xl" />
+                                                    </div>
+                                                    <div className="grid gap-2">
+                                                        <Label className="text-xs font-bold text-muted-foreground uppercase">State / Province</Label>
+                                                        <Input value={formData.contact?.address?.state} onChange={(e) => setFormData({ ...formData, contact: { ...formData.contact, address: { ...formData.contact.address, state: e.target.value } } })} className="rounded-xl" />
+                                                    </div>
+                                                    <div className="grid gap-2">
+                                                        <Label className="text-xs font-bold text-muted-foreground uppercase">ZIP / Postal Code</Label>
+                                                        <Input value={formData.contact?.address?.zip} onChange={(e) => setFormData({ ...formData, contact: { ...formData.contact, address: { ...formData.contact.address, zip: e.target.value } } })} className="rounded-xl" />
+                                                    </div>
+                                                    <div className="grid gap-2">
+                                                        <Label className="text-xs font-bold text-muted-foreground uppercase">Country</Label>
+                                                        <Input value={formData.contact?.address?.country} onChange={(e) => setFormData({ ...formData, contact: { ...formData.contact, address: { ...formData.contact.address, country: e.target.value } } })} className="rounded-xl" />
+                                                    </div>
+                                                </div>
+                                                <div className="grid gap-2 pt-2">
+                                                    <Label className="text-xs font-bold text-muted-foreground uppercase">Full Formatted Address (For Display)</Label>
+                                                    <Textarea value={formData.contact?.address?.full} onChange={(e) => setFormData({ ...formData, contact: { ...formData.contact, address: { ...formData.contact.address, full: e.target.value } } })} className="rounded-2xl min-h-[80px]" placeholder="Complete office address..." />
+                                                </div>
+                                            </div>
+                                            <div className="space-y-4 pt-4 border-t">
+                                                <h4 className="font-bold flex items-center gap-2 text-primary">
+                                                    <Share2 className="h-4 w-4" /> Global Social Network
+                                                </h4>
+                                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                                    <div className="grid gap-2">
+                                                        <Label className="text-xs font-bold text-muted-foreground">LinkedIn</Label>
+                                                        <Input value={formData.contact?.social?.linkedin} onChange={(e) => setFormData({ ...formData, contact: { ...formData.contact, social: { ...formData.contact.social, linkedin: e.target.value } } })} className="rounded-xl" placeholder="URL" />
+                                                    </div>
+                                                    <div className="grid gap-2">
+                                                        <Label className="text-xs font-bold text-muted-foreground">Instagram</Label>
+                                                        <Input value={formData.contact?.social?.instagram} onChange={(e) => setFormData({ ...formData, contact: { ...formData.contact, social: { ...formData.contact.social, instagram: e.target.value } } })} className="rounded-xl" placeholder="Handle/URL" />
+                                                    </div>
+                                                    <div className="grid gap-2">
+                                                        <Label className="text-xs font-bold text-muted-foreground">Facebook</Label>
+                                                        <Input value={formData.contact?.social?.facebook} onChange={(e) => setFormData({ ...formData, contact: { ...formData.contact, social: { ...formData.contact.social, facebook: e.target.value } } })} className="rounded-xl" placeholder="URL" />
+                                                    </div>
+                                                    <div className="grid gap-2">
+                                                        <Label className="text-xs font-bold text-muted-foreground">Twitter (X)</Label>
+                                                        <Input value={formData.contact?.social?.twitter} onChange={(e) => setFormData({ ...formData, contact: { ...formData.contact, social: { ...formData.contact.social, twitter: e.target.value } } })} className="rounded-xl" placeholder="Handle/URL" />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {editingSection === 'purpose' && (
+                                        <div className="space-y-8">
+                                            <Card className="rounded-[2rem] border-primary/5 bg-emerald-500/5 shadow-inner">
+                                                <CardHeader>
+                                                    <CardTitle className="text-emerald-600 flex items-center gap-2">
+                                                        <Target className="h-5 w-5" /> Mission Statement
+                                                    </CardTitle>
+                                                </CardHeader>
+                                                <CardContent>
+                                                    <Textarea
+                                                        value={formData.mission}
+                                                        onChange={(e) => setFormData({ ...formData, mission: e.target.value })}
+                                                        className="bg-background/80 border-0 rounded-2xl p-4 min-h-[120px] shadow-sm text-lg italic"
+                                                        placeholder="What is your immediate purpose?"
+                                                    />
+                                                </CardContent>
+                                            </Card>
+                                            <Card className="rounded-[2rem] border-primary/5 bg-blue-500/5 shadow-inner">
+                                                <CardHeader>
+                                                    <CardTitle className="text-blue-600 flex items-center gap-2">
+                                                        <Eye className="h-5 w-5" /> Vision Statement
+                                                    </CardTitle>
+                                                </CardHeader>
+                                                <CardContent>
+                                                    <Textarea
+                                                        value={formData.vision}
+                                                        onChange={(e) => setFormData({ ...formData, vision: e.target.value })}
+                                                        className="bg-background/80 border-0 rounded-2xl p-4 min-h-[120px] shadow-sm text-lg italic"
+                                                        placeholder="Where do you see the company in 10 years?"
+                                                    />
+                                                </CardContent>
+                                            </Card>
+                                        </div>
+                                    )}
+
+                                    {editingSection === 'authority' && (
+                                        <div className="space-y-8">
+                                            <div className="grid gap-8">
+                                                <ObjectArrayInput
+                                                    label="Global Trust Badges"
+                                                    values={formData.badges}
+                                                    onChange={(val) => setFormData({ ...formData, badges: val })}
+                                                    fields={[
+                                                        { name: 'title', label: 'Badge Name', placeholder: 'e.g. Amazon Gold Partner' },
+                                                        { name: 'subtitle', label: 'Brief Qualifier', placeholder: 'e.g. Certified Agency' },
+                                                    ]}
+                                                />
+                                                <ObjectArrayInput
+                                                    label="Key Performance Indicators (Stats)"
+                                                    values={formData.stats}
+                                                    onChange={(val) => setFormData({ ...formData, stats: val })}
+                                                    fields={[
+                                                        { name: 'value', label: 'Stat Value', placeholder: 'e.g. 500+' },
+                                                        { name: 'label', label: 'Stat Label', placeholder: 'e.g. Sellers Boosted' },
+                                                        { name: 'description', label: 'Hover Context', placeholder: 'Brief explanation...', fullWidth: true },
+                                                    ]}
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {editingSection === 'narrative' && (
+                                        <div className="space-y-8">
+                                            <div className="grid gap-3">
+                                                <Label className="text-sm font-bold uppercase">Narrative Theme / Title</Label>
+                                                <Input value={formData.story?.title} onChange={(e) => setFormData({ ...formData, story: { ...formData.story, title: e.target.value } })} className="text-xl font-bold h-14 rounded-2xl" placeholder="e.g. From Humble Roots to Global Growth" />
+                                            </div>
+                                            <div className="grid gap-3">
+                                                <Label className="text-sm font-bold uppercase">The Story Body</Label>
+                                                <Textarea value={formData.story?.content} onChange={(e) => setFormData({ ...formData, story: { ...formData.story, content: e.target.value } })} className="min-h-[250px] p-6 text-lg leading-relaxed rounded-2xl" placeholder="Tell your brand's journey here..." />
+                                            </div>
+                                            <ArrayInput
+                                                label="Major Career Milestones"
+                                                values={formData.story?.highlights || []}
+                                                onChange={(val) => setFormData({ ...formData, story: { ...formData.story, highlights: val } })}
+                                                placeholder="e.g. Launched our first international office"
+                                            />
+                                        </div>
+                                    )}
+
+                                    {editingSection === 'culture' && (
+                                        <div className="space-y-8">
+                                            <div className="grid gap-3 max-w-lg">
+                                                <Label className="text-sm font-bold uppercase">Section Headline</Label>
+                                                <Input value={formData.culture?.title} onChange={(e) => setFormData({ ...formData, culture: { ...formData.culture, title: e.target.value } })} className="h-12 rounded-xl" />
+                                            </div>
+                                            <ObjectArrayInput
+                                                label="Core Organizational Values"
+                                                values={formData.culture?.values}
+                                                onChange={(val) => setFormData({ ...formData, culture: { ...formData.culture, values: val } })}
+                                                fields={[
+                                                    { name: 'title', label: 'Principle Name', placeholder: 'e.g. Radical Integrity' },
+                                                    { name: 'description', label: 'What it means to us', placeholder: 'e.g. We never cut corners...', fullWidth: true },
+                                                ]}
+                                            />
+                                        </div>
+                                    )}
+
+                                    {editingSection === 'edge' && (
+                                        <div className="space-y-6">
+                                            <ObjectArrayInput
+                                                label="Why Partner With Us?"
+                                                values={formData.whyChooseUs}
+                                                onChange={(val) => setFormData({ ...formData, whyChooseUs: val })}
+                                                fields={[
+                                                    { name: 'title', label: 'Feature Title', placeholder: 'e.g. 24/7 Priority Support' },
+                                                    { name: 'description', label: 'Benefit Explanation', placeholder: 'Describe how this helps the client...', fullWidth: true },
+                                                    { name: 'icon', label: 'Icon (Lucide Keyword)', type: 'icon', placeholder: 'Select Icon' }
+                                                ]}
+                                            />
+                                        </div>
+                                    )}
+
+                                    {editingSection === 'partners' && (
+                                        <div className="space-y-6">
+                                            <ObjectArrayInput
+                                                label="Ecosystem & Partners"
+                                                values={formData.partners}
+                                                onChange={(val) => setFormData({ ...formData, partners: val })}
+                                                fields={[
+                                                    { name: 'name', label: 'Brand/Entity Name', placeholder: 'e.g. Google Cloud' },
+                                                    { name: 'logo', label: 'Brand Logo', type: 'image', fullWidth: true }
+                                                ]}
+                                            />
+                                        </div>
+                                    )}
+                                </motion.div>
+                            </AnimatePresence>
+                        </ScrollableContainer>
+
+                        <DialogFooter className="p-8 bg-muted/30 border-t shrink-0 flex items-center justify-between sm:justify-between w-full">
+                            <Button variant="outline" size="lg" className="rounded-2xl border-primary/20" onClick={() => setEditingSection(null)}>
+                                Cancel
+                            </Button>
+                            <Button
+                                size="lg"
+                                className="rounded-2xl shadow-xl shadow-primary/20 px-10 font-bold"
+                                onClick={() => handleSave()}
+                                disabled={isSaving}
+                            >
+                                {isSaving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                                <Save className="w-4 h-4 mr-2" />
+                                Apply Changes
+                            </Button>
+                        </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
@@ -736,7 +1076,7 @@ function TeamManager({ data, onUpdate, refreshData }) {
             role: formData.get("role"),
             category: formData.get("category"),
             email: formData.get("email"),
-            image: formData.get("image") || "https://images.unsplash.com/photo-1500648767791-00dcc994a43e",
+            image: formData.get("image") || "",
             order: Number(formData.get("order")) || members.length + 1
         };
 
@@ -870,7 +1210,7 @@ function TeamManager({ data, onUpdate, refreshData }) {
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                 <DialogContent className="max-h-[85vh] flex flex-col p-0 gap-0">
                     <DialogHeader className="p-6 pb-2"><DialogTitle>{isViewMode ? "View Member" : currentMember ? "Edit Member" : "Add Member"}</DialogTitle></DialogHeader>
-                    <ScrollableContainer className="flex-1 p-6 pt-2">
+                    <ScrollableContainer className="flex-1 min-h-0 p-6 pt-2">
                         {isViewMode ? (
                             <div className="space-y-4">
                                 <div className="flex justify-center"><img src={currentMember?.image || undefined} className="w-24 h-24 rounded-full object-cover" /></div>
@@ -963,19 +1303,19 @@ function FeatureManager({ data, plansData, onUpdate, refreshData, onPlansUpdate 
                 // Update plans association
                 const planUpdates = (plansData || []).map(async (plan) => {
                     const isSelected = selectedPlans.includes(plan._id || plan.id);
-                    
+
                     // Find by current text OR old text (if renamed)
-                    const existingIndex = (plan.features || []).findIndex(f => 
+                    const existingIndex = (plan.features || []).findIndex(f =>
                         f.text === newText || (oldText && f.text === oldText)
                     );
 
                     let newFeatures = [...(plan.features || [])];
                     if (existingIndex > -1) {
                         // Update existing entry with new name and status
-                        newFeatures[existingIndex] = { 
-                            ...newFeatures[existingIndex], 
-                            text: newText, 
-                            included: isSelected 
+                        newFeatures[existingIndex] = {
+                            ...newFeatures[existingIndex],
+                            text: newText,
+                            included: isSelected
                         };
                     } else if (isSelected) {
                         // Add new entry if it's a new feature and selected
@@ -983,8 +1323,8 @@ function FeatureManager({ data, plansData, onUpdate, refreshData, onPlansUpdate 
                     }
 
                     // For performance, you might want to filter out empty/duplicate features here too
-                    newFeatures = newFeatures.filter((f, i, self) => 
-                        f.text && f.text.trim().length > 0 && 
+                    newFeatures = newFeatures.filter((f, i, self) =>
+                        f.text && f.text.trim().length > 0 &&
                         self.findIndex(t => t.text === f.text) === i
                     );
 
@@ -1587,7 +1927,7 @@ function PricingManager({ data, hsnData, featuresData, onUpdate, refreshData }) 
                         </div>
                     </DialogHeader>
 
-                    <ScrollableContainer className="flex-1 p-8 pt-6 pb-24 scrollbar-none">
+                    <ScrollableContainer className="flex-1 min-h-0 p-8 pt-6">
                         {isViewMode ? (
                             <div className="space-y-8 animate-in fade-in zoom-in-95 duration-300">
                                 <div className="grid md:grid-cols-3 gap-6">
@@ -1748,7 +2088,7 @@ function PricingManager({ data, hsnData, featuresData, onUpdate, refreshData }) 
                         )}
                     </ScrollableContainer>
 
-                    <DialogFooter className="p-8 bg-background/80 backdrop-blur-md border-t absolute bottom-0 left-0 right-0 z-50">
+                    <DialogFooter className="p-8 bg-background border-t shrink-0">
                         <div className="flex items-center justify-between w-full">
                             <Button type="button" variant="ghost" onClick={() => setIsDialogOpen(false)} className="px-6 rounded-xl hover:bg-muted font-bold text-muted-foreground uppercase text-xs tracking-widest">
                                 Close Portal
@@ -1944,7 +2284,7 @@ function CatalogManager({ data, hsnData, onUpdate, refreshData }) {
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                 <DialogContent className="max-h-[85vh] flex flex-col p-0 gap-0">
                     <DialogHeader className="p-6 pb-2"><DialogTitle>{isViewMode ? "View Item" : "Edit/Add Item"}</DialogTitle></DialogHeader>
-                    <ScrollableContainer className="flex-1 p-6 pt-2">
+                    <ScrollableContainer className="flex-1 min-h-0 p-6 pt-2">
                         {isViewMode ? (
                             <div className="space-y-4">
                                 <div><Label>Name</Label><p className="capitalize">{currentService?.name}</p></div><div><Label>Category</Label><Badge>{currentService?.category}</Badge></div>
@@ -2162,7 +2502,7 @@ function MilestoneManager({ data, onUpdate, refreshData }) {
                         <DialogDescription className="font-medium">Track your company's journey and key successes.</DialogDescription>
                     </DialogHeader>
 
-                    <ScrollableContainer className="max-h-[70vh] p-8 pt-6">
+                    <ScrollableContainer className="flex-1 min-h-0 p-8 pt-6">
                         {isViewMode ? (
                             <div className="space-y-6 animate-in fade-in zoom-in-95 duration-300">
                                 <div className="aspect-video relative rounded-2xl overflow-hidden bg-muted border shadow-inner">
@@ -2465,7 +2805,7 @@ function BlogManager({ data, onUpdate, refreshData }) {
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                 <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-0 gap-0">
                     <DialogHeader className="p-6 pb-2"><DialogTitle>{isViewMode ? "View Post" : "Edit Post"}</DialogTitle></DialogHeader>
-                    <ScrollableContainer className="flex-1 p-6 pt-2">
+                    <ScrollableContainer className="flex-1 min-h-0 p-6 pt-2">
                         {isViewMode ? (
                             <div className="space-y-4">
                                 <img src={currentPost?.thumbnail || undefined} alt="cover" className="w-full h-40 object-cover rounded-md" />

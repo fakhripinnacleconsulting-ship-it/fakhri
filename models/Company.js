@@ -2,6 +2,8 @@ import mongoose from 'mongoose';
 
 const CompanySchema = new mongoose.Schema({
     name: { type: String, required: true },
+    logo: { type: String },
+    aboutImage: { type: String },
     tagline: { type: String },
     established: { type: String },
     description: { type: String },
