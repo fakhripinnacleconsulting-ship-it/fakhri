@@ -10,7 +10,7 @@ import {
 import { ScrollableContainer } from "@/components/ui/scrollable-container";
 import { CheckCircle2, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ContactDialog } from "./ContactDialog";
+import Link from "next/link";
 
 export function ServiceDetailsDialog({ trigger, service, Icon }) {
     if (!service) return null;
@@ -100,14 +100,11 @@ export function ServiceDetailsDialog({ trigger, service, Icon }) {
                 <div className="p-6 border-t border-border flex items-center justify-between bg-secondary/10">
                     <p className="text-xs text-muted-foreground hidden sm:block">Ready to scale your business with us?</p>
                     <div className="flex gap-3 w-full sm:w-auto">
-                        <ContactDialog
-                            defaultService={service.title}
-                            trigger={
-                                <Button className="flex-1 sm:flex-none">
-                                    Get Started <ArrowRight className="ml-2 w-4 h-4" />
-                                </Button>
-                            }
-                        />
+                        <Link href={`/contact?service=${encodeURIComponent(service.title)}`} className="flex-1 sm:flex-none">
+                            <Button className="w-full">
+                                Get Started <ArrowRight className="ml-2 w-4 h-4" />
+                            </Button>
+                        </Link>
                     </div>
                 </div>
             </DialogContent>
