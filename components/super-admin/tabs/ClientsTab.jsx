@@ -1732,7 +1732,7 @@ const SuperAdminClientsTab = () => {
                                         </div>
                                     </TableHead>
                                     <TableHead>Active Tasks</TableHead>
-                                    <TableHead>
+                                    {/* <TableHead>
                                         <div className="flex items-center gap-1">
                                             <span className="font-semibold text-xs whitespace-nowrap">Status</span>
                                             <Popover>
@@ -1759,7 +1759,7 @@ const SuperAdminClientsTab = () => {
                                                 </PopoverContent>
                                             </Popover>
                                         </div>
-                                    </TableHead>
+                                    </TableHead> */}
                                     <TableHead>
                                         <button onClick={() => handleSort('remainingDays')} className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-md font-semibold transition-colors text-xs whitespace-nowrap", sortConfig.key === 'remainingDays' ? "bg-primary/10 text-primary" : "hover:bg-muted text-muted-foreground hover:text-foreground")}>
                                             Remaining {getSortIcon('remainingDays')}
@@ -1854,7 +1854,7 @@ const SuperAdminClientsTab = () => {
                                             <TableCell>
                                                 <span className="font-medium">{client.activeTasks || 0}</span>
                                             </TableCell>
-                                            <TableCell>
+                                            {/* <TableCell>
                                                 <Badge
                                                     variant={client.status === "active" ? "default" : "outline"}
                                                     className={cn(
@@ -1865,7 +1865,7 @@ const SuperAdminClientsTab = () => {
                                                 >
                                                     {client.status === "active" ? "Active" : client.status === "pending" ? "Pending" : "Disabled"}
                                                 </Badge>
-                                            </TableCell>
+                                            </TableCell> */}
                                             <TableCell>
                                                 {remainingDays !== null ? (
                                                     <div className={cn(
