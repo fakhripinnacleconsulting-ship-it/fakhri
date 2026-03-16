@@ -1,4 +1,4 @@
-# Fakhri IT Services Platform
+# Fakhri IT Services Platform 
 
 Official web platform for Fakhri IT Services, a premier agency dedicated to empowering Amazon sellers with expert account management, advertising strategies, and growth solutions. This is a comprehensive, full-stack web application built using Next.js, Tailwind CSS, and MongoDB.
 
