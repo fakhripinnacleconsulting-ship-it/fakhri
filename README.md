@@ -11,7 +11,7 @@ Official web platform for Fakhri IT Services, a premier agency dedicated to empo
 *   **Task Management Workflow**: Robust internal task tracking system with real-time updates and activity logging.
 *   **Analytics Integration**: Fully integrated with Google Analytics 4 (GA4) for comprehensive traffic and user behavior tracking.
 *   **Database Management**: Includes tailored scripts for migrating and seeding public data securely.
-
+ 
 ## 🛠️ Tech Stack
  
 *   **Frontend**: Next.js 15 (App Router), React 19
