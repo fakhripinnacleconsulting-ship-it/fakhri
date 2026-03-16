@@ -3465,8 +3465,8 @@ const SuperAdminClientsTab = () => {
                             <div className="text-muted-foreground">User Permission:</div>
                             <div className="font-medium truncate">
                                 {selectedClient.userPermission ? (
-                                    selectedClient.userPermission.startsWith('http') || selectedClient.userPermission.includes('.com') || selectedClient.userPermission.includes('.in') ? (
-                                        <a href={selectedClient.userPermission.startsWith('http') ? selectedClient.userPermission : `https://${selectedClient.userPermission}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Link ↗</a>
+                                    selectedClient.userPermission.startsWith('http') ? (
+                                        <a href={selectedClient.userPermission} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Link ↗</a>
                                     ) : selectedClient.userPermission
                                 ) : "-"}
                             </div>
