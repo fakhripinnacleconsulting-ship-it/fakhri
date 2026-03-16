@@ -3465,8 +3465,8 @@ const SuperAdminClientsTab = () => {
                             <div className="text-muted-foreground">User Permission:</div>
                             <div className="font-medium truncate">
                                 {selectedClient.userPermission ? (
-                                    selectedClient.userPermission.startsWith('http') ? (
-                                        <a href={selectedClient.userPermission} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Link ↗</a>
+                                    selectedClient.userPermission.startsWith('http') || selectedClient.userPermission.includes('.com') || selectedClient.userPermission.includes('.in') ? (
+                                        <a href={selectedClient.userPermission.startsWith('http') ? selectedClient.userPermission : `https://${selectedClient.userPermission}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Link ↗</a>
                                     ) : selectedClient.userPermission
                                 ) : "-"}
                             </div>
@@ -3474,14 +3474,14 @@ const SuperAdminClientsTab = () => {
                             <div className="text-muted-foreground">Account Access:</div>
                             <div className="font-medium truncate">
                                 {selectedClient.accountAccessUrl ? (
-                                    <a href={selectedClient.accountAccessUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Link ↗</a>
+                                    <a href={selectedClient.accountAccessUrl.startsWith('http') ? selectedClient.accountAccessUrl : `https://${selectedClient.accountAccessUrl}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Link ↗</a>
                                 ) : "-"}
                             </div>
 
                             <div className="text-muted-foreground">POE:</div>
                             <div className="font-medium truncate">
                                 {selectedClient.poeUrl ? (
-                                    <a href={selectedClient.poeUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Link ↗</a>
+                                    <a href={selectedClient.poeUrl.startsWith('http') ? selectedClient.poeUrl : `https://${selectedClient.poeUrl}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Link ↗</a>
                                 ) : "-"}
                             </div>
                         </div>
