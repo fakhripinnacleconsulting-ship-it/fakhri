@@ -51,9 +51,9 @@ export default function LegalPageContent({ page }) {
             <section className="container-custom mt-[-60px] relative z-20">
                 <ScrollReveal>
                     <div className="bg-background border border-border rounded-3xl p-8 md:p-16 shadow-xl shadow-primary/5">
-                        <article className="prose prose-lg max-w-none">
+                        <article className="prose prose-lg max-w-none w-full break-words overflow-hidden">
                             <div
-                                className="legal-content text-foreground/80 leading-relaxed 
+                                className="legal-content text-foreground/80 leading-relaxed break-words whitespace-pre-wrap
                                     [&>h2]:text-foreground [&>h2]:heading-md [&>h2]:mt-12 [&>h2]:mb-6 
                                     [&>h3]:text-foreground [&>h3]:heading-sm [&>h3]:mt-8 [&>h3]:mb-4
                                     [&>p]:mb-6 [&>ul]:mb-8 [&>ul]:list-disc [&>ul]:pl-6
