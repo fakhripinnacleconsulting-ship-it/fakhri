@@ -110,16 +110,9 @@ const AdminClientsTab = ({ currentUser }) => {
 
             setLoading(true);
             try {
-                const clientProjection = {
-                    name: 1, company: 1, email: 1, phone: 1,
-                    plan: 1, supportType: 1, status: 1,
-                    activeTasks: 1, createdAt: 1
-                };
-
                 const [clientsRes, a] = await Promise.all([
                     getClients(
-                        currentUser.role === 'super-admin' ? {} : { managerId: currentUser._id },
-                        { projection: clientProjection }
+                        currentUser.role === 'super-admin' ? {} : { managerId: currentUser._id }
                     ),
                     getAdmins()
                 ]);
