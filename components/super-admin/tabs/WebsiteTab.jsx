@@ -109,7 +109,8 @@ import {
     getFAQs, upsertFAQ, deleteFAQ,
     getJobs, upsertJob, deleteJob,
     getHSNs, upsertHSN, deleteHSN,
-    getWebPage, upsertWebPage
+    getWebPage, upsertWebPage,
+    purgePublicCache
 } from "@/lib/actions/content";
 import { getBlogPosts, upsertBlogPost, deleteBlogPost } from "@/lib/actions/blog";
 
@@ -273,6 +274,20 @@ export default function WebsiteTab() {
         }
     }, [activeCategory]);
 
+    const handlePurgeCache = async () => {
+        toast.loading("Purging public website cache...", { id: "purge-cache" });
+        try {
+            const res = await purgePublicCache();
+            if (res.success) {
+                toast.success("Public cache cleared. Updates are now live.", { id: "purge-cache" });
+            } else {
+                toast.error("Failed to clear public cache", { id: "purge-cache" });
+            }
+        } catch (error) {
+            toast.error("An error occurred while purging cache", { id: "purge-cache" });
+        }
+    };
+
     useEffect(() => {
         loadAllData();
     }, [loadAllData]);
@@ -322,11 +337,22 @@ export default function WebsiteTab() {
                         </p>
                     </div>
                 </div>
-                <div className="flex flex-col items-end gap-1">
-                    <Badge variant="outline" className="px-3 py-1 bg-background/50 backdrop-blur-sm border-primary/20 text-primary font-bold">
-                        CMS PORTAL
-                    </Badge>
-                    <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold opacity-60">System Version 2.4.0</span>
+                <div className="flex flex-col md:flex-row items-end md:items-center gap-3">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handlePurgeCache}
+                        className="rounded-xl border-primary/20 hover:bg-primary/5 text-xs font-bold transition-all shadow-sm"
+                    >
+                        <RefreshCw className="w-3.5 h-3.5 mr-2" />
+                        Purge Public Cache
+                    </Button>
+                    <div className="flex flex-col items-end gap-0.5">
+                        <Badge variant="outline" className="px-3 py-0.5 bg-background/50 backdrop-blur-sm border-primary/20 text-primary font-bold">
+                            CMS PORTAL
+                        </Badge>
+                        <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold opacity-60">System Version 2.4.0</span>
+                    </div>
                 </div>
             </div>
 
@@ -357,18 +383,18 @@ export default function WebsiteTab() {
                         exit={{ opacity: 0, y: -10 }}
                         transition={{ duration: 0.3, ease: "easeInOut" }}
                     >
-                        {activeCategory === "Company" && <CompanyManager data={companyInfo} onUpdate={setCompanyInfo} refreshData={refreshCategoryData} />}
-                        {activeCategory === "Team" && <TeamManager data={members} onUpdate={setMembers} refreshData={refreshCategoryData} />}
-                        {activeCategory === "Pricing" && <PricingManager data={pricingPlans} hsnData={hsnCodes} featuresData={pricingFeatures} onUpdate={setPricingPlans} refreshData={refreshCategoryData} />}
-                        {activeCategory === "Features" && <FeatureManager data={pricingFeatures} plansData={pricingPlans} onUpdate={setPricingFeatures} refreshData={refreshCategoryData} onPlansUpdate={setPricingPlans} />}
-                        {activeCategory === "Services" && <ServiceManager data={services} onUpdate={setServices} refreshData={refreshCategoryData} />}
-                        {activeCategory === "Catalog" && <CatalogManager data={catalog} hsnData={hsnCodes} onUpdate={setCatalog} refreshData={refreshCategoryData} />}
-                        {activeCategory === "Blogs" && <BlogManager data={posts} onUpdate={setPosts} refreshData={refreshCategoryData} />}
-                        {activeCategory === "Milestones" && <MilestoneManager data={milestones} onUpdate={setMilestones} refreshData={refreshCategoryData} />}
-                        {activeCategory === "Testimonials" && <TestimonialManager data={testimonials} onUpdate={setTestimonials} refreshData={refreshCategoryData} />}
-                        {activeCategory === "FAQs" && <FAQManager data={faqs} onUpdate={setFaqs} refreshData={refreshCategoryData} />}
-                        {activeCategory === "Jobs" && <JobManager data={jobs} onUpdate={setJobs} refreshData={refreshCategoryData} />}
-                        {activeCategory === "HSN" && <HSNManager data={hsnCodes} onUpdate={setHsnCodes} refreshData={refreshCategoryData} />}
+                        {activeCategory === "Company" && <CompanyManager data={companyInfo} onUpdate={setCompanyInfo} refreshData={refreshCategoryData} onPurgeCache={handlePurgeCache} />}
+                        {activeCategory === "Team" && <TeamManager data={members} onUpdate={setMembers} refreshData={refreshCategoryData} onPurgeCache={handlePurgeCache} />}
+                        {activeCategory === "Pricing" && <PricingManager data={pricingPlans} hsnData={hsnCodes} featuresData={pricingFeatures} onUpdate={setPricingPlans} refreshData={refreshCategoryData} onPurgeCache={handlePurgeCache} />}
+                        {activeCategory === "Features" && <FeatureManager data={pricingFeatures} plansData={pricingPlans} onUpdate={setPricingFeatures} refreshData={refreshCategoryData} onPlansUpdate={setPricingPlans} onPurgeCache={handlePurgeCache} />}
+                        {activeCategory === "Services" && <ServiceManager data={services} onUpdate={setServices} refreshData={refreshCategoryData} onPurgeCache={handlePurgeCache} />}
+                        {activeCategory === "Catalog" && <CatalogManager data={catalog} hsnData={hsnCodes} onUpdate={setCatalog} refreshData={refreshCategoryData} onPurgeCache={handlePurgeCache} />}
+                        {activeCategory === "Blogs" && <BlogManager data={posts} onUpdate={setPosts} refreshData={refreshCategoryData} onPurgeCache={handlePurgeCache} />}
+                        {activeCategory === "Milestones" && <MilestoneManager data={milestones} onUpdate={setMilestones} refreshData={refreshCategoryData} onPurgeCache={handlePurgeCache} />}
+                        {activeCategory === "Testimonials" && <TestimonialManager data={testimonials} onUpdate={setTestimonials} refreshData={refreshCategoryData} onPurgeCache={handlePurgeCache} />}
+                        {activeCategory === "FAQs" && <FAQManager data={faqs} onUpdate={setFaqs} refreshData={refreshCategoryData} onPurgeCache={handlePurgeCache} />}
+                        {activeCategory === "Jobs" && <JobManager data={jobs} onUpdate={setJobs} refreshData={refreshCategoryData} onPurgeCache={handlePurgeCache} />}
+                        {activeCategory === "HSN" && <HSNManager data={hsnCodes} onUpdate={setHsnCodes} refreshData={refreshCategoryData} onPurgeCache={handlePurgeCache} />}
                         {activeCategory === "Legal" && <LegalManager />}
                     </motion.div>
                 </AnimatePresence>
@@ -493,7 +519,7 @@ function ObjectArrayInput({ values = [], onChange, label, fields }) {
 }
 
 // 1. Company Manager (Refactored for Industry-Level UI/UX)
-function CompanyManager({ data, onUpdate, refreshData }) {
+function CompanyManager({ data, onUpdate, refreshData, onPurgeCache }) {
     const [formData, setFormData] = useState(data || {
         name: "", tagline: "", established: "", description: "", logo: "",
         contact: { phone: { primary: "", secondary: "", whatsapp: "" }, email: { info: "", support: "", general: "" }, address: { full: "" }, social: { linkedin: "", instagram: "" } },
@@ -589,6 +615,10 @@ function CompanyManager({ data, onUpdate, refreshData }) {
                     </div>
                 </div>
                 <div className="flex flex-wrap gap-3">
+                    <Button variant="outline" size="lg" className="rounded-xl border-primary/20 hover:bg-primary/5 transition-all shadow-sm" onClick={() => onPurgeCache()}>
+                        <RefreshCw className="w-4 h-4 mr-2" />
+                        Purge Cache
+                    </Button>
                     <Button variant="outline" size="lg" className="rounded-xl border-primary/20 hover:bg-primary/5 transition-all shadow-sm" onClick={() => refreshData()}>
                         <RefreshCw className="w-4 h-4 mr-2" />
                         Sync Data
