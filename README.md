@@ -14,7 +14,7 @@ Official web platform for Fakhri IT Services, a premier agency dedicated to empo
  
 ## 🛠️ Tech Stack
  
-*   **Frontend**: Next.js 15 (App Router), React 19
+*   **Frontend**: Next.js 15 (App Router), React  19
 *   **Styling**: Tailwind CSS v4, Radix UI Components, Framer Motion
 *   **Backend**: Next.js API Routes, Node.js
 *   **Database**: MongoDB (via Mongoose)
