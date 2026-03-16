@@ -561,6 +561,13 @@ const SuperAdminTasksTab = ({ currentUser }) => {
         const file = e.target.files[0];
         if (!file) return;
 
+        const fileExtension = file.name.split('.').pop().toLowerCase();
+        if (!['xlsx', 'xls'].includes(fileExtension)) {
+            toast.error("Please upload only Excel (.xlsx, .xls) files.");
+            if (fileInputRef.current) fileInputRef.current.value = "";
+            return;
+        }
+
         setIsFileReading(true);
         setUploadProgress(0);
 
@@ -569,7 +576,7 @@ const SuperAdminTasksTab = ({ currentUser }) => {
         reader.onload = (e) => {
             try {
                 const data = new Uint8Array(e.target.result);
-                const workbook = XLSX.read(data, { type: "array" });
+                const workbook = XLSX.read(data, { type: "array", cellDates: true });
                 const sheetName = workbook.SheetNames[0];
                 const worksheet = workbook.Sheets[sheetName];
                 const jsonData = XLSX.utils.sheet_to_json(worksheet);
@@ -581,12 +588,25 @@ const SuperAdminTasksTab = ({ currentUser }) => {
                         normalizedRow[key.toLowerCase().trim().replace(/\s+/g, '')] = row[key];
                     });
 
+                    let rawDate = normalizedRow['duedate'] || normalizedRow['date'] || "";
+                    let formattedDate = "";
+                    if (rawDate instanceof Date) {
+                        formattedDate = rawDate.toISOString().split('T')[0];
+                    } else if (rawDate) {
+                        const parsed = new Date(rawDate);
+                        if (!isNaN(parsed)) {
+                            formattedDate = parsed.toISOString().split('T')[0];
+                        } else {
+                            formattedDate = rawDate;
+                        }
+                    }
+
                     return {
                         title: normalizedRow['title'] || normalizedRow['taskname'] || "",
                         description: normalizedRow['description'] || normalizedRow['desc'] || "",
                         status: normalizeStatus(normalizedRow['status']),
                         priority: normalizePriority(normalizedRow['priority']),
-                        dueDate: normalizedRow['duedate'] || normalizedRow['date'] || "",
+                        dueDate: formattedDate,
                         planForWeek: normalizedRow['weekno'] || normalizedRow['week'] || normalizedRow['planforweek'] || "",
                         clientName: normalizedRow['client'] || normalizedRow['relatedto'] || normalizedRow['company'] || "",
                         ownerName: normalizedRow['owner'] || normalizedRow['manager'] || normalizedRow['assignee'] || ""
