@@ -1,0 +1,111 @@
+import mongoose from 'mongoose';
+
+const UserSchema = new mongoose.Schema({
+    name: { type: String, required: true },
+    email: { type: String, required: true, unique: true },
+    password: { type: String },
+    phone: { type: String },
+    role: {
+        type: String,
+        enum: ['super-admin', 'admin', 'client'],
+        required: true
+    },
+    // Admin specific fields
+    adminRole: { type: String }, // e.g., 'Account Manager', 'Senior Manager'
+    team: { type: String },
+    teamId: { type: Number },
+    teams: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Team' }],
+    permissions: [{ type: String }],
+    performance: {
+        activeTasks: { type: Number, default: 0 },
+        completedTasks: { type: Number, default: 0 },
+        clientSatisfaction: { type: String }
+    },
+    assignedClientIds: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+
+    // Client specific fields
+    company: { type: String },
+    gstNo: { type: String },
+    plan: { type: String },
+    supportType: {
+        type: String,
+        default: 'Normal'
+    },
+    status: {
+        type: String,
+        enum: ['active', 'pending', 'disabled'],
+        default: 'active'
+    },
+    manager: { type: String },
+    managerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    salesManager: { type: String },
+    salesManagerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    listingManager: { type: String },
+    listingManagerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    adsManager: { type: String },
+    adsManagerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    spCentralRequestId: { type: String },
+    marketplace: { type: String },
+    userPermission: { type: String },
+    accountAccessUrl: { type: String },
+    leadSource: { type: String },
+    supervisor: { type: String },
+    merchantToken: { type: String },
+    stage: { type: String },
+    subscriptionStart: { type: Date },
+    subscriptionEnd: { type: Date },
+    launchWeek: { type: String },
+    poeUrl: { type: String },
+    discount: { type: String },
+    location: { type: String },
+    address: { type: String },
+    city: { type: String },
+    state: { type: String },
+    pincode: { type: String },
+    country: { type: String, default: 'India' },
+    subscribedServices: [{
+        serviceId: { type: String },
+        name: { type: String },
+        subscribedDate: { type: Date, default: Date.now },
+        status: { type: String, enum: ['active', 'expired', 'cancelled', 'in-progress', 'completed'], default: 'active' },
+        type: { type: String, enum: ['standard', 'priority'], default: 'standard' }
+    }],
+    joinedDate: { type: Date, default: Date.now },
+    paymentMethods: [{
+        brand: { type: String, default: 'Visa' }, // Visa, Mastercard, American Express
+        last4: { type: String },
+        expiry: { type: String },
+        cardholderName: { type: String },
+        isDefault: { type: Boolean, default: false },
+        providerId: { type: String }, // For Stripe/PayPal payment method IDs
+        createdAt: { type: Date, default: Date.now }
+    }],
+    notificationSettings: {
+        soundEnabled: { type: Boolean, default: false },
+        emailNotifications: { type: Boolean, default: false },
+        pushNotifications: { type: Boolean, default: false },
+        taskUpdates: { type: Boolean, default: false },
+        paymentAlerts: { type: Boolean, default: false },
+        marketingNews: { type: Boolean, default: false },
+        weeklyDigest: { type: Boolean, default: false }
+    },
+    notificationSettingsConfigured: { type: Boolean, default: false },
+    pushSubscriptions: [{
+        endpoint: { type: String, required: true },
+        keys: {
+            p256dh: { type: String, required: true },
+            auth: { type: String, required: true }
+        },
+        createdAt: { type: Date, default: Date.now }
+    }],
+    resetPasswordToken: { type: String },
+    resetPasswordExpires: { type: Date },
+    assignedAdminIds: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }]
+}, { timestamps: true });
+
+// Optimize frequent queries:
+UserSchema.index({ role: 1, status: 1 });
+UserSchema.index({ role: 1, createdAt: -1 });
+UserSchema.index({ email: 1 });
+
+export default mongoose.models.User || mongoose.model('User', UserSchema);
