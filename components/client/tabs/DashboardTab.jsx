@@ -11,8 +11,11 @@ import { getNotifications } from "@/lib/actions/notification";
 import TaskDetailsDialog from "@/components/dashboard/TaskDetailsDialog";
 import { toast } from "sonner";
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { calculatePeriodDays } from "@/lib/utils";
 
-const ClientDashboardTab = ({ setActiveTab, currentUser }) => {
+const ClientDashboardTab = ({ currentUser }) => {
+    const router = useRouter();
     const { data: session } = useSession();
     const [loading, setLoading] = useState(true);
     const [client, setClient] = useState(null);
@@ -83,6 +86,19 @@ const ClientDashboardTab = ({ setActiveTab, currentUser }) => {
     const completedTasksCount = tasks.filter(t => ["completed"].includes(normalize(t.status))).length;
     const cancelledTasksCount = tasks.filter(t => ["cancelled"].includes(normalize(t.status))).length;
 
+    // Calculate next payment date
+    let nextPaymentDate = client.subscriptionEnd ? new Date(client.subscriptionEnd) : null;
+    if (!nextPaymentDate && client.plan && client.plan !== "None") {
+        const planDays = calculatePeriodDays(client.plan);
+        nextPaymentDate = new Date(client.subscriptionStart || client.joinedDate || Date.now());
+        const now = new Date();
+        while (nextPaymentDate < now) {
+            nextPaymentDate.setDate(nextPaymentDate.getDate() + (planDays || 30));
+            if (!planDays || planDays <= 0) break;
+        }
+    }
+    const nextPaymentDateString = nextPaymentDate ? nextPaymentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : "---";
+
     // Get recent tasks
     const recentTasks = tasks.slice(0, 5);
 
@@ -132,7 +148,7 @@ const ClientDashboardTab = ({ setActiveTab, currentUser }) => {
 
             {/* Stats Grid */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="p-5 rounded-xl bg-card border hover:shadow-md transition-all duration-300 group cursor-pointer" onClick={() => setActiveTab("Plan")}>
+                <div className="p-5 rounded-xl bg-card border hover:shadow-md transition-all duration-300 group cursor-pointer" onClick={() => router.push("/client/dashboard/plan")}>
                     <div className="flex items-start justify-between">
                         <div>
                             <p className="text-xs text-muted-foreground mb-1 uppercase tracking-wider font-medium">Active Plan</p>
@@ -145,18 +161,18 @@ const ClientDashboardTab = ({ setActiveTab, currentUser }) => {
                         </div>
                     </div>
                 </div>
-                {/* <div className="p-5 rounded-xl bg-card border hover:shadow-md transition-all duration-300 group">
+                <div className="p-5 rounded-xl bg-card border hover:shadow-md transition-all duration-300 group cursor-pointer" onClick={() => router.push("/client/dashboard/billing")}>
                     <div className="flex items-start justify-between">
                         <div>
-                            <p className="text-xs text-muted-foreground mb-1 uppercase tracking-wider font-medium">Status</p>
-                            <p className="text-xl font-heading font-bold capitalize">{client.status || "Active"}</p>
+                            <p className="text-xs text-muted-foreground mb-1 uppercase tracking-wider font-medium">Next Payment</p>
+                            <p className="text-xl font-heading font-bold text-primary">{client.plan && client.plan !== "None" ? nextPaymentDateString : "N/A"}</p>
                         </div>
-                        <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-600 group-hover:bg-emerald-500 group-hover:text-white transition-all duration-300">
-                            <CheckCircle2 className="h-5 w-5" />
+                        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all duration-300">
+                            <Clock className="h-5 w-5" />
                         </div>
                     </div>
-                </div> */}
-                <div className="p-5 rounded-xl bg-card border hover:shadow-md transition-all duration-300 group cursor-pointer" onClick={() => setActiveTab("Tasks")}>
+                </div>
+                <div className="p-5 rounded-xl bg-card border hover:shadow-md transition-all duration-300 group cursor-pointer" onClick={() => router.push("/client/dashboard/tasks")}>
                     <div className="flex items-start justify-between">
                         <div>
                             <p className="text-xs text-muted-foreground mb-1 uppercase tracking-wider font-medium">Active Tasks</p>
@@ -167,7 +183,7 @@ const ClientDashboardTab = ({ setActiveTab, currentUser }) => {
                         </div>
                     </div>
                 </div>
-                <div className="p-5 rounded-xl bg-card border hover:shadow-md transition-all duration-300 group cursor-pointer" onClick={() => setActiveTab("Tasks")}>
+                <div className="p-5 rounded-xl bg-card border hover:shadow-md transition-all duration-300 group cursor-pointer" onClick={() => router.push("/client/dashboard/tasks")}>
                     <div className="flex items-start justify-between">
                         <div>
                             <p className="text-xs text-muted-foreground mb-1 uppercase tracking-wider font-medium">Completed</p>
@@ -243,7 +259,7 @@ const ClientDashboardTab = ({ setActiveTab, currentUser }) => {
                             <div className="w-1.5 h-5 rounded-full bg-amber-500" />
                             Recent Tasks
                         </h2>
-                        <button onClick={() => setActiveTab("Tasks")} className="text-sm text-primary hover:underline flex items-center gap-1 font-medium">
+                        <button onClick={() => router.push("/client/dashboard/tasks")} className="text-sm text-primary hover:underline flex items-center gap-1 font-medium">
                             View All <ArrowRight className="h-3.5 w-3.5" />
                         </button>
                     </div>

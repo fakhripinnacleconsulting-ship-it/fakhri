@@ -283,14 +283,22 @@ const ClientBillingTab = ({ currentUser }) => {
         );
     }
 
-    // Calculate next payment date (based on period)
-    const planDays = calculatePeriodDays(planDetails?.period || client.plan);
-    const nextPaymentDate = new Date(client?.joinedDate || Date.now());
+    // Calculate next payment date
+    // Priority 1: Use client.subscriptionEnd if it exists
+    // Priority 2: Project from joinedDate using plan period as a fallback
+    let nextPaymentDate = client.subscriptionEnd ? new Date(client.subscriptionEnd) : null;
 
-    // If joinedDate was long ago, find the next occurrence in the future
-    const now = new Date();
-    while (nextPaymentDate < now) {
-        nextPaymentDate.setDate(nextPaymentDate.getDate() + planDays);
+    if (!nextPaymentDate) {
+        const planDays = calculatePeriodDays(planDetails?.period || client.plan);
+        // Use subscriptionStart if available, fallback to joinedDate, then now
+        nextPaymentDate = new Date(client?.subscriptionStart || client?.joinedDate || Date.now());
+
+        // If base date was long ago, find the next occurrence in the future
+        const now = new Date();
+        while (nextPaymentDate < now) {
+            nextPaymentDate.setDate(nextPaymentDate.getDate() + planDays);
+            if (planDays <= 0) break; // Safety break
+        }
     }
 
     const nextPaymentDateString = nextPaymentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
