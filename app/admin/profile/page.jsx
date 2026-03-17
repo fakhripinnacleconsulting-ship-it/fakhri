@@ -43,7 +43,7 @@ const AdminProfile = () => {
             <Label htmlFor="email">Email</Label>
             <div className="relative">
               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input id="email" defaultValue="k6263638053@gmail.com" className="pl-10" />
+              <Input id="email" defaultValue="k8982675004@gmail.com" className="pl-10" />
             </div>
           </div>
           <div className="space-y-2">

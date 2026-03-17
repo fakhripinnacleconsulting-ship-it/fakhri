@@ -4,7 +4,7 @@ export const admins = [
     {
         id: 1,
         name: "Sarah Mitchell",
-        email: "k6263638053@gmail.com",
+        email: "k8982675004@gmail.com",
         role: "Account Manager",
         team: "Marketing Team", // Denormalized for easy access
         teamId: 1,

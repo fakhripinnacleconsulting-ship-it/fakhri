@@ -46,7 +46,7 @@ export const NoPlanState = ({ title, message, hideWhatsApp = false }) => {
                     <p className="text-xs text-muted-foreground mb-3">Or chat with us directly</p>
                     <div className="inline-block" style={{ transform: 'none' }}>
                         <a
-                            href="https://wa.me/916263638053"
+                            href="https://wa.me/918982675004"
                             target="_blank"
                             rel="noopener noreferrer"
                             className="bg-[#25D366] text-white px-6 py-3 rounded-full font-bold shadow-lg hover:bg-[#128C7E] transition-all flex items-center gap-2"
@@ -56,7 +56,7 @@ export const NoPlanState = ({ title, message, hideWhatsApp = false }) => {
                             </svg>
                             WhatsApp Us
                         </a>
-                        <p className="text-xs text-muted-foreground mt-2 font-mono">6263638053</p>
+                        <p className="text-xs text-muted-foreground mt-2 font-mono">8982675004</p>
                     </div>
                 </div>
             )}

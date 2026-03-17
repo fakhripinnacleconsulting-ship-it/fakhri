@@ -340,6 +340,15 @@ const SuperAdminTasksTab = ({ currentUser }) => {
                     updates.ownerId = manager.id;
                 }
             }
+
+            // Check subscription status
+            const now = new Date();
+            const isPlanActive = client.subscriptionEnd && new Date(client.subscriptionEnd) > now;
+            const hasActiveAddons = (client.subscribedServices || []).some(s => ['active', 'in-progress'].includes(s.status));
+
+            if (!isPlanActive && !hasActiveAddons) {
+                toast.warning("NOTE: This client's plan has expired and they have no active add-on services. Task creation might fail.");
+            }
         }
         setNewTask(prev => ({ ...prev, ...updates }));
     };
@@ -375,6 +384,16 @@ const SuperAdminTasksTab = ({ currentUser }) => {
         }
 
         const selectedClient = clients.find(c => (c.id || c._id)?.toString() === newTask.relatedTo);
+
+        // Plan Expiry Check
+        const now = new Date();
+        const isPlanActive = selectedClient?.subscriptionEnd && new Date(selectedClient.subscriptionEnd) > now;
+        const hasActiveAddons = (selectedClient?.subscribedServices || []).some(s => ['active', 'in-progress'].includes(s.status));
+
+        if (!isPlanActive && !hasActiveAddons) {
+            toast.error("This client's plan has expired and they have no active add-on services. Task creation is disabled.");
+            return;
+        }
         setIsSubmitting(true);
 
         try {
@@ -414,6 +433,12 @@ const SuperAdminTasksTab = ({ currentUser }) => {
             };
 
             const savedTask = await upsertTask(taskPayload);
+            if (savedTask && savedTask.error) {
+                toast.error(savedTask.error);
+                setIsSubmitting(false);
+                return;
+            }
+
             if (savedTask) {
                 await fetchTasks();
                 setShowCreateTask(false);
@@ -706,7 +731,10 @@ const SuperAdminTasksTab = ({ currentUser }) => {
 
                 try {
                     const result = await upsertTask(taskPayload);
-                    if (result) {
+                    if (result && result.error) {
+                        console.error(`Failed to create task for ${client.name}: ${result.error}`);
+                        failCount++;
+                    } else if (result) {
                         successCount++;
                     } else {
                         failCount++;

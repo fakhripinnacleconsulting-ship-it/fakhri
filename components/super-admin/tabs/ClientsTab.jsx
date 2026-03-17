@@ -838,6 +838,16 @@ const SuperAdminClientsTab = () => {
             return;
         }
 
+        // 1. Plan Expiry Check
+        const now = new Date();
+        const isPlanActive = selectedClient?.subscriptionEnd && new Date(selectedClient.subscriptionEnd) > now;
+        const hasActiveAddons = (selectedClient?.subscribedServices || []).some(s => ['active', 'in-progress'].includes(s.status));
+
+        if (!isPlanActive && !hasActiveAddons) {
+            toast.error("This client's plan has expired and they have no active add-on services. Task creation is disabled.");
+            return;
+        }
+
         setIsSubmitting(true);
         try {
             let attachmentData = null;
@@ -876,6 +886,12 @@ const SuperAdminClientsTab = () => {
             };
 
             const savedTask = await upsertTask(taskPayload);
+            if (savedTask && savedTask.error) {
+                toast.error(savedTask.error);
+                setIsSubmitting(false);
+                return;
+            }
+
             if (savedTask) {
                 setTasks(prev => [savedTask, ...prev]);
 
@@ -2886,7 +2902,17 @@ const SuperAdminClientsTab = () => {
                                         </SelectContent>
                                     </Select>
                                 </div>
-                                <Button onClick={() => setShowCreateTask(true)}>
+                                <Button onClick={() => {
+                                    const now = new Date();
+                                    const isPlanActive = selectedClient?.subscriptionEnd && new Date(selectedClient.subscriptionEnd) > now;
+                                    const hasActiveAddons = (selectedClient?.subscribedServices || []).some(s => ['active', 'in-progress'].includes(s.status));
+
+                                    if (!isPlanActive && !hasActiveAddons) {
+                                        toast.error("This client's plan has expired and they have no active add-on services. Task creation is disabled.");
+                                        return;
+                                    }
+                                    setShowCreateTask(true);
+                                }}>
                                     <Plus className="h-4 w-4 mr-1" />
                                     New Task
                                 </Button>
@@ -3589,10 +3615,25 @@ const SuperAdminClientsTab = () => {
                     {/* <div className="bg-card rounded-xl border shadow-2xl p-6">
                         <h3 className="font-heading font-semibold mb-4">Quick Actions</h3>
                         <div className="space-y-2">
-                            <Button variant="outline" className="w-full justify-start" onClick={() => { setActiveView("tasks"); setShowCreateTask(true); }}>
-                                <Plus className="h-4 w-4 mr-2" />
-                                Create New Task
-                            </Button>
+                                            <Button
+                                                variant="outline"
+                                                className="w-full justify-start"
+                                                onClick={() => {
+                                                    const now = new Date();
+                                                    const isPlanActive = selectedClient?.subscriptionEnd && new Date(selectedClient.subscriptionEnd) > now;
+                                                    const hasActiveAddons = (selectedClient?.subscribedServices || []).some(s => ['active', 'in-progress'].includes(s.status));
+
+                                                    if (!isPlanActive && !hasActiveAddons) {
+                                                        toast.error("This client's plan has expired and they have no active add-on services. Task creation is disabled.");
+                                                        return;
+                                                    }
+                                                    setActiveView("tasks");
+                                                    setShowCreateTask(true);
+                                                }}
+                                            >
+                                                <Plus className="h-4 w-4 mr-2" />
+                                                Create New Task
+                                            </Button>
                             <Button variant="outline" className="w-full justify-start" onClick={() => { setActiveView("notes"); setShowAddNote(true); }}>
                                 <StickyNote className="h-4 w-4 mr-2" />
                                 Add Note

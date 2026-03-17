@@ -27,7 +27,7 @@ async function updateEmails() {
         console.log('Connected to MongoDB');
 
         const updates = [
-            { old: 'sarah@fakhriit.com', new: 'k6263638053@gmail.com', name: 'Admin (Sarah)' },
+            { old: 'sarah@fakhriit.com', new: 'k8982675004@gmail.com', name: 'Admin (Sarah)' },
             { old: 'alex@digitalgoods.com', new: 'mauryatech7@gmail.com', name: 'Client (Alex)' }
         ];
 

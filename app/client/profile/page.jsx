@@ -83,7 +83,7 @@ const ClientProfile = () => {
         </div>
         <div>
           <p className="font-medium">Sarah Mitchell</p>
-          <p className="text-sm text-primary">k6263638053@gmail.com</p>
+          <p className="text-sm text-primary">k8982675004@gmail.com</p>
         </div>
       </div>
     </div>
