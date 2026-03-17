@@ -22,8 +22,8 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# local env files
-.env.local
+# local env files - Pushing to GitHub as per user request
+# .env.local
 .env
 .env.development.local
 .env.test.local
