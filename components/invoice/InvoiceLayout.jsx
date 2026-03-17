@@ -343,12 +343,12 @@ const InvoiceLayout = forwardRef(({ invoice }, ref) => {
                         <p>© {new Date().getFullYear()} {SELLER_DETAILS.name}</p>
                         <p className="mt-1 leading-tight">Declaration: This is a computer generated invoice and does not require a physical signature. All particulars are true and correct.</p>
                     </div>
-                    <div className="w-56 text-center">
+                    {/* <div className="w-56 text-center">
                         <div className="border-b border-slate-800 mb-1 h-8 flex items-end justify-center italic text-slate-200 text-xs pb-1">
                             Authorized Representative
                         </div>
                         <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Authorized Signature</p>
-                    </div>
+                    </div> */}
                 </div>
             </div>
         </div>
