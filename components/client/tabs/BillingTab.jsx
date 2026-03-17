@@ -322,7 +322,10 @@ const ClientBillingTab = ({ currentUser }) => {
                     <p className="text-sm font-medium text-primary">
                         {client.plan && client.plan !== "None" ? `${planDetails?.prices?.monthly || "Custom Pricing"} / ${planDetails?.period || "month"}` : "-"}
                     </p>
-                    <p className="text-[10px] text-muted-foreground capitalize">Status: {client.plan && client.plan !== "None" ? (client.status || "Active") : "-"}</p>
+                    <p className="text-[10px] text-muted-foreground capitalize">Status: {client.plan && client.plan !== "None" ?
+                        // (client.status || "Active") 
+                        ""
+                        : "-"}</p>
                 </div>
                 <div className="bg-card rounded-xl border p-6">
                     <div className="flex items-center gap-3 mb-2">

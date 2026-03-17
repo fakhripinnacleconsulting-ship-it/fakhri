@@ -434,10 +434,10 @@ const ClientPlanTab = ({ currentUser, managerPhone, managerName }) => {
                                     <p className={`font-semibold ${isExpired ? 'text-destructive' : ''}`}>{validUntilStr}</p>
                                     {!isExpired && <p className="text-xs text-primary font-medium mt-1">{daysLeft} days left</p>}
                                 </div>
-                                <div className="p-4 rounded-lg bg-accent/50">
+                                {/* <div className="p-4 rounded-lg bg-accent/50">
                                     <p className="text-sm text-muted-foreground">Account Status</p>
                                     <p className={`font-semibold capitalize ${client.status === 'active' ? 'text-primary' : 'text-muted-foreground'}`}>{client.status || "Active"}</p>
-                                </div>
+                                </div> */}
                             </div>
 
                             <h3 className="font-heading font-semibold mb-4">Included Services</h3>

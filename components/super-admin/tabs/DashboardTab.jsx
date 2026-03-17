@@ -713,7 +713,7 @@ const DashboardTab = ({ setActiveTab, currentUser }) => {
                                         <TableRow className="hover:bg-transparent">
                                             <TableHead className="text-xs font-semibold uppercase py-3">Client</TableHead>
                                             <TableHead className="text-xs font-semibold uppercase py-3">Plan</TableHead>
-                                            <TableHead className="text-xs font-semibold uppercase py-3">Status</TableHead>
+                                            {/* <TableHead className="text-xs font-semibold uppercase py-3">Status</TableHead> */}
                                             <TableHead className="text-xs font-semibold uppercase py-3 text-right">Joined</TableHead>
                                         </TableRow>
                                     </TableHeader>
@@ -731,12 +731,12 @@ const DashboardTab = ({ setActiveTab, currentUser }) => {
                                                         {client.plan || "N/A"}
                                                     </Badge>
                                                 </TableCell>
-                                                <TableCell>
+                                                {/* <TableCell>
                                                     <div className="flex items-center gap-1.5">
                                                         <div className={`w-1.5 h-1.5 rounded-full ${client.status === "active" ? "bg-green-500 shadow-[0_0_5px_rgba(34,197,94,0.5)]" : "bg-gray-300"}`} />
                                                         <span className="text-[10px] capitalize font-medium">{client.status}</span>
                                                     </div>
-                                                </TableCell>
+                                                </TableCell> */}
                                                 <TableCell className="text-right text-[11px] text-muted-foreground font-medium">
                                                     {new Date(client.joinedDate || client.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}
                                                 </TableCell>

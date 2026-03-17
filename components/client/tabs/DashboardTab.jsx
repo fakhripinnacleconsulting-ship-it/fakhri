@@ -145,7 +145,7 @@ const ClientDashboardTab = ({ setActiveTab, currentUser }) => {
                         </div>
                     </div>
                 </div>
-                <div className="p-5 rounded-xl bg-card border hover:shadow-md transition-all duration-300 group">
+                {/* <div className="p-5 rounded-xl bg-card border hover:shadow-md transition-all duration-300 group">
                     <div className="flex items-start justify-between">
                         <div>
                             <p className="text-xs text-muted-foreground mb-1 uppercase tracking-wider font-medium">Status</p>
@@ -155,7 +155,7 @@ const ClientDashboardTab = ({ setActiveTab, currentUser }) => {
                             <CheckCircle2 className="h-5 w-5" />
                         </div>
                     </div>
-                </div>
+                </div> */}
                 <div className="p-5 rounded-xl bg-card border hover:shadow-md transition-all duration-300 group cursor-pointer" onClick={() => setActiveTab("Tasks")}>
                     <div className="flex items-start justify-between">
                         <div>

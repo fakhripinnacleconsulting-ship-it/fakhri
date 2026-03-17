@@ -89,7 +89,7 @@ const SuperAdminClients = () => {
             <TableHead>Email</TableHead>
             <TableHead>Plan</TableHead>
             <TableHead>Assigned POC</TableHead>
-            <TableHead>Status</TableHead>
+            {/* <TableHead>Status</TableHead> */}
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -124,11 +124,11 @@ const SuperAdminClients = () => {
                 </SelectContent>
               </Select>)}
             </TableCell>
-            <TableCell>
+            {/* <TableCell>
               <Badge variant={client.status === "active" ? "default" : "outline"}>
                 {client.status === "active" ? "Active" : "Pending"}
               </Badge>
-            </TableCell>
+            </TableCell> */}
             <TableCell className="text-right">
               <Button variant="ghost" size="sm">
                 <Eye className="h-4 w-4" />

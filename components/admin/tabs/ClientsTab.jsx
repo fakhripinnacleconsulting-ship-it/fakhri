@@ -625,11 +625,11 @@ const AdminClientsTab = ({ currentUser }) => {
                                             Active Tasks {getSortIcon(clientSortConfig, 'activeTasks')}
                                         </Button>
                                     </TableHead>
-                                    <TableHead>
+                                    {/* <TableHead>
                                         <Button variant="ghost" size="sm" onClick={() => handleSort(setClientSortConfig, 'status')} className="p-0 hover:bg-transparent font-bold uppercase text-[11px] tracking-wider">
                                             Status {getSortIcon(clientSortConfig, 'status')}
                                         </Button>
-                                    </TableHead>
+                                    </TableHead> */}
                                     <TableHead className="text-right font-bold uppercase text-[11px] tracking-wider">Actions</TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -666,11 +666,11 @@ const AdminClientsTab = ({ currentUser }) => {
                                         <TableCell>
                                             <span className="font-medium">{client.activeTasks}</span>
                                         </TableCell>
-                                        <TableCell>
+                                        {/* <TableCell>
                                             <Badge variant={client.status === "active" ? "default" : "outline"} className="bg-green-500/10 text-green-600 border-green-500/20">
                                                 Active
                                             </Badge>
-                                        </TableCell>
+                                        </TableCell> */}
                                         <TableCell className="text-right">
                                             <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleClientClick(client); }}>
                                                 <Eye className="h-4 w-4" />
@@ -1113,10 +1113,10 @@ const AdminClientsTab = ({ currentUser }) => {
                                 <h2 className="font-heading font-semibold text-lg capitalize truncate">{selectedClient.name}</h2>
                                 <p className="text-sm text-muted-foreground capitalize truncate">{selectedClient.company || 'Personal'}</p>
                                 <div className="flex items-center gap-2 mt-1">
-                                    <Badge variant={selectedClient.status === "active" ? "default" : "outline"}
+                                    {/* <Badge variant={selectedClient.status === "active" ? "default" : "outline"}
                                         className={selectedClient.status === "active" ? "bg-green-500/10 text-green-600 border-green-500/20 text-[10px]" : "text-[10px]"}>
                                         {selectedClient.status === "active" ? "Active" : selectedClient.status === "pending" ? "Pending" : selectedClient.status || "Active"}
-                                    </Badge>
+                                    </Badge> */}
                                     <Badge variant={selectedClient.plan === "Platinum" ? "default" : selectedClient.plan === "Premium" ? "secondary" : "outline"}
                                         className={`text-[10px] ${selectedClient.plan === "Free" ? "bg-emerald-100 text-emerald-700 border-emerald-200" : !selectedClient.plan ? "bg-gray-100 text-gray-500 border-gray-200" : ""}`}>
                                         {selectedClient.plan || "None"} Plan
