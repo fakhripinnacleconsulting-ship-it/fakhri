@@ -303,7 +303,7 @@ const ClientBillingTab = ({ currentUser }) => {
 
     const nextPaymentDateString = nextPaymentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
-    if ((!client.plan || client.plan === "None") && invoices.length === 0) {
+    if ((!client.plan || client.plan === "None") && invoices.length === 0 && (!summary || summary.totalAmount === 0)) {
         return (
             <NoPlanState
                 title="Billing & Invoices"
@@ -340,8 +340,8 @@ const ClientBillingTab = ({ currentUser }) => {
                         <CreditCard className="h-5 w-5 text-primary" />
                         <span className="text-sm text-muted-foreground">Next Payment</span>
                     </div>
-                    <p className="text-2xl font-heading font-bold">{client.plan && client.plan !== "None" ? nextPaymentDateString : "N/A"}</p>
-                    <p className="text-sm text-muted-foreground">{client.plan && client.plan !== "None" ? "Monthly recurrence" : "No payment scheduled"}</p>
+                    <p className="text-2xl font-heading font-bold">{(client.plan && client.plan !== "None") || client.subscriptionEnd ? nextPaymentDateString : "N/A"}</p>
+                    <p className="text-sm text-muted-foreground">{(client.plan && client.plan !== "None") || client.subscriptionEnd ? "Set recurrence" : "No payment scheduled"}</p>
                 </div>
                 <div className="bg-card rounded-xl border p-6">
                     <div className="flex items-center gap-3 mb-2">
@@ -349,7 +349,7 @@ const ClientBillingTab = ({ currentUser }) => {
                         <span className="text-sm text-muted-foreground">Total Paid</span>
                     </div>
                     <p className="text-2xl font-heading font-bold">₹{formatINR(summary?.totalAmount || 0)}</p>
-                    <p className="text-sm text-muted-foreground">{summary?.paidCount || 0} invoices paid</p>
+                    <p className="text-sm text-muted-foreground">{summary?.paidCount || 0} payments recorded</p>
                 </div>
             </div>
 

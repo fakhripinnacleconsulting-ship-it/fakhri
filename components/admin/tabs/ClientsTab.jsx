@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { getClients, getTasks, upsertTask, deleteTask, getNotes, upsertNote, getAdmins, sendClientEmail, updateSubscribedServiceStatus, uploadTaskAttachment, getActiveTaskCounts } from "@/lib/actions/admin";
+import { getClients, getTasks, upsertTask, deleteTask, getNotes, upsertNote, getAdmins, sendClientEmail, updateSubscribedServiceStatus, uploadTaskAttachment, getActiveTaskCounts, getInvoices } from "@/lib/actions/admin";
 import { toast } from "sonner";
 import {
     AlertDialog,
@@ -40,6 +40,7 @@ const AdminClientsTab = ({ currentUser }) => {
     const [tasks, setTasks] = useState([]);
     const [notes, setNotes] = useState([]);
     const [admins, setAdmins] = useState([]);
+    const [invoices, setInvoices] = useState([]);
     const [loading, setLoading] = useState(true);
 
     const [selectedClient, setSelectedClient] = useState(null);
@@ -161,16 +162,18 @@ const AdminClientsTab = ({ currentUser }) => {
                         tags: 1, updates: 1
                     };
 
-                    const [t, clientNotes] = await Promise.all([
+                    const [t, clientNotes, clientInvoices] = await Promise.all([
                         getTasks(
                             { 'client.id': selectedClient._id || selectedClient.id },
                             taskProjection
                         ),
-                        getNotes(selectedClient._id || selectedClient.id)
+                        getNotes(selectedClient._id || selectedClient.id),
+                        getInvoices({ clientId: selectedClient._id || selectedClient.id, limit: 100 })
                     ]);
                     const uniqueTasks = Array.from(new Map((Array.isArray(t) ? t : []).map(item => [String(item._id || item.id), item])).values());
                     setTasks(uniqueTasks);
                     setNotes(clientNotes || []);
+                    setInvoices(clientInvoices?.invoices || clientInvoices || []);
                 } catch (error) {
                     console.error("Failed to load client data", error);
                 }
@@ -179,8 +182,38 @@ const AdminClientsTab = ({ currentUser }) => {
         } else {
             setTasks([]);
             setNotes([]);
+            setInvoices([]);
         }
     }, [selectedClient]);
+
+    // Calculate last payment from invoices or manual amount
+    const lastPayment = useMemo(() => {
+        if (!selectedClient) return null;
+
+        // 1. Check for latest paid invoice
+        const paidInvoices = (invoices || []).filter(inv => inv.status === 'Paid');
+        if (paidInvoices.length > 0) {
+            const sortedByDate = [...paidInvoices].sort((a, b) =>
+                new Date(b.date || b.createdAt) - new Date(a.date || a.createdAt)
+            );
+            return {
+                amount: sortedByDate[0].amount || 0,
+                date: sortedByDate[0].date || sortedByDate[0].createdAt,
+                method: "Invoice"
+            };
+        }
+
+        // 2. Fallback to manual amount if present
+        if (selectedClient.amount && Number(selectedClient.amount) > 0) {
+            return {
+                amount: Number(selectedClient.amount),
+                date: selectedClient.createdAt,
+                method: "Manual"
+            };
+        }
+
+        return null;
+    }, [selectedClient, invoices]);
 
     // Mock managers for now
 
@@ -1171,6 +1204,18 @@ const AdminClientsTab = ({ currentUser }) => {
                                 {selectedClient.subscriptionEnd
                                     ? new Date(selectedClient.subscriptionEnd).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
                                     : '-'}
+                            </div>
+
+                            <div className="text-muted-foreground">Last Payment:</div>
+                            <div className="font-medium text-emerald-600 font-bold">
+                                {lastPayment 
+                                    ? `₹${lastPayment.amount.toLocaleString('en-IN')}` 
+                                    : "-"}
+                                {lastPayment && (
+                                    <span className="text-[9px] text-muted-foreground ml-1 font-normal italic">
+                                        ({new Date(lastPayment.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })})
+                                    </span>
+                                )}
                             </div>
                         </div>
                     </div>

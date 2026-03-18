@@ -165,7 +165,7 @@ const ClientDashboardTab = ({ currentUser }) => {
                     <div className="flex items-start justify-between">
                         <div>
                             <p className="text-xs text-muted-foreground mb-1 uppercase tracking-wider font-medium">Next Payment</p>
-                            <p className="text-xl font-heading font-bold text-primary">{client.plan && client.plan !== "None" ? nextPaymentDateString : "N/A"}</p>
+                            <p className="text-xl font-heading font-bold text-primary">{(client.plan && client.plan !== "None") || client.subscriptionEnd ? nextPaymentDateString : "N/A"}</p>
                         </div>
                         <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all duration-300">
                             <Clock className="h-5 w-5" />

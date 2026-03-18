@@ -57,6 +57,7 @@ const UserSchema = new mongoose.Schema({
     launchWeek: { type: String },
     poeUrl: { type: String },
     discount: { type: String },
+    amount: { type: Number, default: 0 },
     location: { type: String },
     address: { type: String },
     city: { type: String },
