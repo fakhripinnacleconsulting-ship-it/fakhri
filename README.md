@@ -12,7 +12,7 @@ Official web platform for Fakhri IT Services, a premier agency dedicated to empo
 *   **Analytics Integration**: Fully integrated with Google Analytics 4 (GA4) for comprehensive traffic and user behavior tracking.
 *   **Database Management**: Includes tailored scripts for migrating and seeding public data securely.
  
-## 🛠️ Tech Stack
+## 🛠️ Tech Stack 
  
 *   **Frontend**: Next.js 15 (App Router), React  19
 *   **Styling**: Tailwind CSS v4, Radix UI Components, Framer Motion
