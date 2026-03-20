@@ -38,6 +38,9 @@ const PriceCalculatorTab = dynamic(() => import("@/components/shared/PriceCalcul
 const SuperAdminAnalyticsTab = dynamic(() => import("@/components/super-admin/tabs/AnalyticsTab"), {
     loading: () => <div className="h-96 flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
 });
+const SuperAdminInvoicesTab = dynamic(() => import("@/components/super-admin/tabs/InvoicesTab"), {
+    loading: () => <div className="h-96 flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
+});
 
 export default function SuperAdminTabPage({ params }) {
     const { tab: tabName } = use(params);
@@ -53,6 +56,7 @@ export default function SuperAdminTabPage({ params }) {
     if (tabName === "coupons") return <SuperAdminCouponsTab />;
     if (tabName === "price-calculator") return <PriceCalculatorTab />;
     if (tabName === "analytics") return <SuperAdminAnalyticsTab />;
+    if (tabName === "invoices") return <SuperAdminInvoicesTab />;
     if (tabName === "settings") return <SuperAdminSettingsTab />;
 
     return <div className="p-8 text-center text-muted-foreground">Tab not found</div>;

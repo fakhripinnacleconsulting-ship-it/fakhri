@@ -43,7 +43,9 @@ const InvoiceSchema = new mongoose.Schema({
     paymentMethod: { type: String },
     downloadUrl: { type: String },
     notes: { type: String, default: 'Thank for the business' },
-    isManualAmount: { type: Boolean, default: false }
+    isManualAmount: { type: Boolean, default: false },
+    excludeFromRevenue: { type: Boolean, default: false },
+    isDeleted: { type: Boolean, default: false }
 }, { timestamps: true });
 
 InvoiceSchema.index({ status: 1 });

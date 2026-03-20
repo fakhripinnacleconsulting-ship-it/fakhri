@@ -6,7 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard, Users, UsersRound, UserCog, CheckSquare,
   IndianRupee, Settings, Menu, X, LogOut, Shield, Globe, Loader2, MessageSquare, Tag,
-  ChevronLeft, ChevronRight, Briefcase, FileText, Calculator, LineChart
+  ChevronLeft, ChevronRight, Briefcase, FileText, Calculator, LineChart, Receipt
 } from "lucide-react";
 import Logo from "@/components/ui/Logo";
 import { Button } from "@/components/ui/button";
@@ -36,6 +36,7 @@ const navigation = [
   { name: "Files", id: "Files", href: "/super-admin/dashboard/files", icon: FileText },
   { name: "Website CMS", id: "Website", href: "/super-admin/dashboard/website", icon: Globe },
   { name: "Coupons", id: "Coupons", href: "/super-admin/dashboard/coupons", icon: Tag },
+  { name: "Invoices", id: "Invoices", href: "/super-admin/dashboard/invoices", icon: Receipt },
   { name: "Price Calculator", id: "PriceCalculator", href: "/super-admin/dashboard/price-calculator", icon: Calculator },
   { name: "Analytics", id: "Analytics", href: "/super-admin/dashboard/analytics", icon: LineChart },
   // { name: "Settings", id: "Settings_App", href: "/super-admin/dashboard/settings", icon: Settings },
@@ -179,7 +180,7 @@ export default function SuperAdminDashboardLayout({ children }) {
     if (!targetTab) {
       const typeToTab = {
         task: 'Tasks',
-        invoice: 'Dashboard',
+        invoice: 'Invoices',
         info: 'Dashboard',
         success: 'Dashboard',
         warning: 'Dashboard',
