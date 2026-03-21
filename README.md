@@ -7,7 +7,7 @@ Official web platform for Fakhri IT Services, a premier agency dedicated to empo
 *   **Public Facing Website**: A modern, responsive, and SEO-optimized public website showcasing services, pricing plans, blog posts, and company information.
 *   **Multi-Role Authentication**: Secure login system using NextAuth with support for Google OAuth and Credentials, handling three distinct user roles: `client`, `admin`, and `super-admin`..
 *   **Client Dashboard**: A dedicated portal for clients to view their active plans, track task progress, access invoices, and communicate with their account managers.
-*   **Admin & Super-Admin Dashboard**: Comprehensive management tools for internal teams to seamlessly handle client accounts, assign tasks, manage billing, and track team performance.
+*   **Admin & Super-Admin Dashboard**: Comprehensive management tools for internal teams to seamlessly handle client accounts, assign tasks, manage billing, and track team performance..
 *   **Task Management Workflow**: Robust internal task tracking system with real-time updates and activity logging.
 *   **Analytics Integration**: Fully integrated with Google Analytics 4 (GA4) for comprehensive traffic and user behavior tracking.
 *   **Database Management**: Includes tailored scripts for migrating and seeding public data securely.
