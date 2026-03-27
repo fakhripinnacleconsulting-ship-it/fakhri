@@ -331,7 +331,7 @@ function CheckoutContent() {
             }
 
             const options = {
-                key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_test_S8nBupaDcI7xxs",
+                key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
                 amount: orderRes.order.amount,
                 currency: orderRes.order.currency,
                 name: "Fakhri IT Services",
